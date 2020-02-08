@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.skstudio.dao.UserMapper">
+
+    <update id="initialize">
+        CREATE TABLE IF NOT EXISTS user(user_id BIGINT NOT NULL PRIMARY KEY,username VARCHAR(20)NOT NULL,password CHAR(32)NOT NULL,nickname VARCHAR(30)NOT NULL,email VARCHAR(254)NOT NULL,sex NCHAR(2),avatar VARCHAR(256),phone CHAR(11),last_session_id VARCHAR(64),ip VARCHAR(35),signature VARCHAR(32),private_sex boolean default false,private_email boolean default true,private_phone boolean default true,admin boolean default false);
+    </update>
+
+    <insert id="initializeAdmin" parameterType="cn.skstudio.pojo.User">
+        INSERT INTO user(user_id,username,password,nickname,email,sex,avatar,phone,signature,last_session_id,ip,private_sex,private_phone,private_email,admin) SELECT 1,#{username},#{password},#{nickname},#{email},#{sex},#{avatar},#{phone},#{signature},#{lastSessionID},#{IP},#{privateSex},#{privatePhone},#{privateEmail},#{admin} FROM DUAL WHERE NOT EXISTS(SELECT user_id FROM user WHERE user_id = 1);
+    </insert>
+
+    <select id="getAll" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE admin = false
+    </select>
+
+    <select id="getAllAdmin" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE admin = true
+    </select>
+
+    <select id="getUserByUsername" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE username = #{username}
+    </select>
+
+    <select id="getUserByEmail" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE email = #{email}
+    </select>
+
+    <insert id="insertUser" parameterType="cn.skstudio.pojo.User">
+        INSERT INTO user(user_id, username, password, nickname, email, sex, avatar, phone,signature,last_session_id,ip,private_sex,private_phone,private_email,admin)
+        VALUES (#{userID},#{username},#{password},#{nickname},#{email},#{sex},#{avatar},#{phone},#{signature},#{lastSessionID},#{IP},#{privateSex},#{privatePhone},#{privateEmail},#{admin});
+    </insert>
+
+    <update id="updateUser" parameterType="cn.skstudio.pojo.User">
+        UPDATE
+        `user`
+        <set>
+            <if test="nickname != null">
+                nickname = #{nickname},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="sex != null">
+                sex = #{sex},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="signature != null">
+                signature = #{signature}
+            </if>
+            <if test="privateSex != null">
+                private_sex = #{privateSex},
+            </if>
+            <if test="privatePhone != null">
+                private_phone = #{privatePhone},
+            </if>
+            <if test="privateEmail != null">
+                private_email = #{privateEmail},
+            </if>
+            <if test="admin != null">
+                admin = #{admin}
+            </if>
+        </set>
+        WHERE
+        user_id = #{userID}
+    </update>
+
+    <delete id="deleteUser">
+        DELETE FROM user
+        WHERE user_id = id;
+    </delete>
+
+    <update id="updateLoginInfo" parameterType="cn.skstudio.pojo.User">
+        UPDATE
+        `user`
+        <set>
+            ip = #{IP},
+            last_session_id = #{lastSessionID},
+        </set>
+        WHERE user_id = #{userID}
+    </update>
+
+    <update id="updatePassword" parameterType="cn.skstudio.pojo.User">
+        UPDATE
+        `user`
+        <set>
+            password = #{password},
+        </set>
+        WHERE user_id = #{userID}
+    </update>
+
+</mapper>

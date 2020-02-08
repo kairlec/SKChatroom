@@ -1,0 +1,109 @@
+.layui-input {
+  height: 45px;
+  width: 87%;
+  padding-left: 5px;
+  font-size: 16px;
+  display: inline-block
+}
+
+.layui-btn {
+  height: 45px
+}
+
+.layui-carousel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -70%);
+  background-color: rgba(0, 0, 0, 0)
+}
+
+.layui-carousel-ind {
+  margin-top: -20px;
+  top: auto;
+  bottom: 10px
+}
+
+.layui-carousel>[carousel-item] {
+  background-color: rgba(0, 0, 0, 0)
+}
+
+.layui-carousel>[carousel-item]>* {
+  height: auto;
+  background-color: rgba(0, 0, 0, 0)
+}
+
+.layui-carousel>[carousel-item]:before {
+  display: none
+}
+
+.layui-carousel>[carousel-item]>.layui-this {
+  border-radius: 20px
+}
+
+#captcha_input {
+  width: 110px
+}
+
+#captcha_img {
+  margin-bottom: 1px;
+  border-radius: 50px;
+  width: 125px;
+  height: 45px;
+  cursor: pointer;
+  float: left
+}
+
+.input_outer_captcha {
+  height: 46px;
+  width: 210px;
+  float: right;
+  padding: 0 5px;
+  border-radius: 50px;
+  position: relative;
+  border: rgba(255, 255, 255, .2) 2px solid !important
+}
+
+.layui-input-block {
+  margin-left: 0
+}
+
+.layui-input-block span {
+  line-height: 30px;
+  font-size: 14px
+}
+
+.spanpoint {
+  line-height: 30px;
+  font-size: 14px;
+  cursor: pointer
+}
+
+.spanpoint:hover {
+  color: gray
+}
+
+h1 {
+  text-align: center
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none
+}
+
+.my_icon {
+  font-size: 25px;
+  position: absolute;
+  margin: 5.5px 14px
+}
+
+.my_iconfont {
+  font-size: 30px !important;
+  position: absolute;
+  margin: 3px 11px;
+}
