@@ -5,7 +5,7 @@ import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.ResponseDataUtils
 import com.alibaba.fastjson.JSON
 import cn.skstudio.pojo.User
-import cn.skstudio.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.utils.PasswordCoder
 import cn.skstudio.utils.RSACoder
 import cn.skstudio.utils.SendEmail

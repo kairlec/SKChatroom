@@ -1,11 +1,10 @@
 package cn.skstudio.config.database
 
 import cn.skstudio.pojo.MailSender
-import cn.skstudio.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.stereotype.Component
-import javax.annotation.PostConstruct
 
 @Component
 class EditableConfig {

@@ -1,9 +1,7 @@
 package cn.skstudio.local.utils
 
-import cn.skstudio.controller.admin.AdminInterceptor
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.User
-import cn.skstudio.utils.LocalConfig
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.net.URLDecoder

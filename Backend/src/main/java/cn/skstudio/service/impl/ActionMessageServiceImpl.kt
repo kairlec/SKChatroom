@@ -23,6 +23,15 @@ class ActionMessageServiceImpl : ActionMessageService {
         }
     }
 
+    override fun get(messageID: Long): ActionMessage? {
+        return try {
+            actionMessageMapper[messageID]
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     override fun getAllFromActionMessage(userID: Long, after: LocalDateTime): List<ActionMessage>? {
         return try {
             actionMessageMapper.getAllFromActionMessages(userID, Timestamp.valueOf(after))
@@ -53,6 +62,15 @@ class ActionMessageServiceImpl : ActionMessageService {
     override fun newActionMessage(message: ActionMessage): Int? {
         return try {
             actionMessageMapper.addActionMessage(message)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun updateContent(messageID: Long, content: String): Int? {
+        return try {
+            actionMessageMapper.updateContent(messageID, content)
         } catch (e: Exception) {
             e.printStackTrace()
             null

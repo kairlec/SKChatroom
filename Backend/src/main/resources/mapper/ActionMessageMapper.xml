@@ -6,6 +6,12 @@
         CREATE TABLE IF NOT EXISTS action_message(message_id BIGINT NOT NULL PRIMARY KEY,action_type VARCHAR(32) NOT NULL,from_id BIGINT NOT NULL, FOREIGN KEY(from_id) REFERENCES user(user_id),to_id BIGINT NOT NULL, FOREIGN KEY(to_id) REFERENCES user(user_id),time DATETIME NOT NULL,topic VARCHAR(128),context NVARCHAR(1024) NOT NULL,is_read BOOL NOT NULL);
     </update>
 
+    <select id="get" resultType="cn.skstudio.pojo.ActionMessage">
+        SELECT *
+        FROM action_message
+        WHERE message_id = #{messageID}
+    </select>
+
     <select id="getAllFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
         SELECT *
         FROM action_message
@@ -33,7 +39,16 @@
          VALUES(#{messageID},#{action},#{fromID},#{toID},#{time},#{topic},#{context},#{isRead})
     </insert>
 
-    <update id="read" parameterType="java.lang.Long">
+    <update id="updateContent">
+        UPDATE
+        `action_message`
+        <set>
+            content = #{content}
+        </set>
+        WHERE message_id = #{messageID}
+    </update>
+
+    <update id="read">
         UPDATE
         `action_message`
         <set>

@@ -8,6 +8,8 @@ import java.time.LocalDateTime
 interface ActionMessageService {
     fun initialize(): Int?
 
+    operator fun get(messageID: Long): ActionMessage?
+
     fun getAllFromActionMessage(userID: Long, after: LocalDateTime): List<ActionMessage>?
 
     fun getAllToActionMessage(userID: Long, after: LocalDateTime): List<ActionMessage>?
@@ -15,6 +17,8 @@ interface ActionMessageService {
     fun getFromToActionMessage(fromUserID: Long, toUserID: Long, after: LocalDateTime): List<ActionMessage>?
 
     fun newActionMessage(message: ActionMessage): Int?
+
+    fun updateContent(messageID: Long, content: String): Int?
 
     fun read(messageID: Long): Int?
 

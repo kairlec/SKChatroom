@@ -23,6 +23,26 @@ data class ActionMessage(
         return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue)
     }
 
+    fun ownerVerify(userID: Long): Boolean {
+        return when (action) {
+            ActionTypeEnum.ADD_FRIEND_REQUEST -> {
+                userID == fromID || userID == toID
+            }
+            ActionTypeEnum.DELETE_FRIEND_REQUEST -> {
+                userID == fromID
+            }
+            ActionTypeEnum.GROUP_CHAT_MESSAGE -> {
+                true
+            }
+            ActionTypeEnum.PRIVATE_CHAT_MESSAGE -> {
+                userID == fromID || userID == toID
+            }
+            ActionTypeEnum.SYSTEM_NOTIFICATION -> {
+                true
+            }
+        }
+    }
+
     companion object {
         private val snowFlake = SnowFlake(StaticConfig.snowFlakeWorkerId, StaticConfig.snowFlakeDataCenterId)
         fun create(action: ActionTypeEnum,//消息类型

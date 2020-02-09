@@ -26,7 +26,7 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     NOT_FILE(10004, "不是文件", null),
     NOT_MULTIPART_FROM_DATA(10005, "不是multipart/form-data请求", null),
     INSUFFICIENT_PARAMETERS(10006, "需要的参数不足", null),
-    USERID_NOT_EXIST(10007, "用户ID不存在", null),
+    USER_ID_NOT_EXIST(10007, "用户ID不存在", null),
 
     /*用户信息异常*/
 
@@ -70,9 +70,20 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     NULL_CAPTCHA(30011, "验证码为空", null),
     UNKNOWN_PASSWORD(30012, "未知的密码串", null),
     ACCOUNT_NOT_ACTIVATED(30013, "账户尚未激活", null),
+
+
+
+    //消息体异常
+    MESSAGE_NOT_EXIST(70001,"消息不存在",null),
+    MESSAGE_NOT_ALLOWED(70002,"消息不被允许",null),
+    MESSAGE_WRONG_FORMAT(70003,"消息格式错误",null),
+
+
+
     //服务器异常
     IO_EXCEPTION(50001, "IO出现错误", null),
     INITIALIZE_FAILED(50003, "初始化系统出现错误", null);
+
 
     fun data(data: Any?): ServiceErrorEnum {
         this.data = data

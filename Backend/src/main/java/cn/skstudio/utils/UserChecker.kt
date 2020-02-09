@@ -2,6 +2,7 @@ package cn.skstudio.utils
 
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.exception.ServiceErrorEnum
+import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.pojo.Captcha
 import cn.skstudio.pojo.User
 import cn.skstudio.utils.Network.getIpAddress

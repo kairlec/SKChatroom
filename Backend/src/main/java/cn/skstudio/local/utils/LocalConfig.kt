@@ -1,6 +1,5 @@
-package cn.skstudio.utils
+package cn.skstudio.local.utils
 
-import cn.skstudio.service.ActionMessageService
 import cn.skstudio.service.impl.*
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired

@@ -3,7 +3,7 @@ package cn.skstudio.pojo
 import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.exception.ServiceErrorEnum
-import cn.skstudio.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.utils.SendEmail
 import cn.skstudio.utils.SnowFlake
 import com.alibaba.fastjson.JSON

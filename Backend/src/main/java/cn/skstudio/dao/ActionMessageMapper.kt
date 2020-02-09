@@ -9,6 +9,8 @@ import java.sql.Timestamp
 interface ActionMessageMapper {
     fun initialize(): Int?
 
+    operator fun get(@Param("messageID") messageID: Long?): ActionMessage?
+
     fun getAllFromActionMessages(@Param("userID") userID: Long?, @Param("after") after: Timestamp): List<ActionMessage>?
 
     fun getAllToActionMessages(@Param("userID") userID: Long?, @Param("after") after: Timestamp): List<ActionMessage>?
@@ -16,6 +18,8 @@ interface ActionMessageMapper {
     fun getFromToActionMessages(@Param("fromUserID") fromUserID: Long?, @Param("toUserID") toUserID: Long?, @Param("after") after: Timestamp): List<ActionMessage>?
 
     fun addActionMessage(message: ActionMessage): Int?
+
+    fun updateContent(@Param("messageID") messageID: Long?, @Param("content") content: String): Int?
 
     fun read(@Param("messageID") messageID: Long?): Int?
 

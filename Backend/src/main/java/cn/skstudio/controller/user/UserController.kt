@@ -2,11 +2,12 @@ package cn.skstudio.controller.user
 
 import cn.skstudio.controller.websocket.WebSocketHandler
 import cn.skstudio.exception.ServiceErrorEnum
+import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
-import cn.skstudio.pojo.Group
-import cn.skstudio.pojo.GuestUser
-import cn.skstudio.pojo.User
+import cn.skstudio.pojo.*
 import cn.skstudio.utils.*
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.JSONObject
 import org.apache.logging.log4j.LogManager
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -70,57 +71,189 @@ class UserController {
     }
 
     @RequestMapping(value = ["/get/{id}"])
-    fun get(@PathVariable id: Long, request: HttpServletRequest): String {
+    fun get(@PathVariable id: Long): String {
         val user: User = LocalConfig.userService.getUserByID(id)
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.USERID_NOT_EXIST)
+                ?: return ResponseDataUtils.Error(ServiceErrorEnum.USER_ID_NOT_EXIST)
         return ResponseDataUtils.successData(GuestUser.getInstance(user))
     }
 
-    @RequestMapping(value = ["/getGroup"])
-    fun getGroup(request: HttpServletRequest): String {
+
+    @RequestMapping(value = ["/get/list/{type}"])
+    fun getList(@PathVariable type: String, request: HttpServletRequest): String {
         val user: User = request.session.getAttribute("user") as User
-        val friendGroupList = LocalConfig.friendGroupService.getUserGroup(user.userID)
-                ?: object : ArrayList<Group>() {
-                    init {
-                        Group.newDefaultGroup(user.userID)
-                    }
-                }
-        return ResponseDataUtils.successData(friendGroupList)
+        return when (type) {
+            //获取好友分组列表
+            "group" -> {
+                val friendGroupList = LocalConfig.friendGroupService.getUserGroup(user.userID)
+                        ?: object : ArrayList<Group>() {
+                            init {
+                                Group.newDefaultGroup(user.userID)
+                            }
+                        }
+                ResponseDataUtils.successData(friendGroupList)
+            }
+            //获取好友列表
+            "friend" -> {
+                val friendList = LocalConfig.friendService.getFriendList(user.userID) ?: ArrayList()
+                ResponseDataUtils.successData(friendList)
+            }
+            //未知的请求
+            else -> {
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
+            }
+        }
     }
 
-    @RequestMapping(value = ["/getFriend"])
-    fun getFriend(request: HttpServletRequest): String {
-        val user: User = request.session.getAttribute("user") as User
-        val friendList = LocalConfig.friendService.getFriendList(user.userID) ?: ArrayList()
-        return ResponseDataUtils.successData(friendList)
+
+    @RequestMapping(value = ["friend/{type}"])
+    fun friend(@PathVariable type: String, request: HttpServletRequest): String {
+        val user = request.session.getAttribute("user") as User
+        val targetID = request.getParameter("targetID")?.toLong()
+                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+        return when (type) {
+            //添加好友
+            "add" -> {
+                var content = request.getParameter("content")
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                try {
+                    val json = JSON.parseObject(content)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                    json.getObject("groupID", Long::class.java)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                    json["type"] = "REQUEST"
+                    content = json.toJSONString()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                }
+                val message = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, user.userID, targetID, null, content)
+                LocalConfig.actionMessageService.newActionMessage(message)
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+                ResponseDataUtils.successData(targetID)
+            }
+            //删除好友
+            "delete" -> {
+                LocalConfig.friendService.deleteFriend(user.userID, targetID)
+                        ?: ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+                ResponseDataUtils.OK()
+            }
+            //同意添加好友
+            "accept" -> {
+                //获取添加人在被添加人中的分组
+                val friendGroupID = request.getParameter("groupID")?.toLong()
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("groupID"))
+                //获取要处理的消息ID
+                val messageID = request.getParameter("messageID")?.toLong()
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                //获取要处理的消息
+                val message = LocalConfig.actionMessageService[messageID]
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
+                //验证消息所有者(防止非法提交来获得他人的私人消息)
+                if (!message.ownerVerify(user.userID)) {
+                    ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID))
+                } else {
+                    //获取被添加人在添加人中的分组
+                    val userGroupID = JSON.parseObject(message.context)?.getObject("groupID", Long::class.java)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("groupID"))
+                    //写入好友数据表列表
+                    LocalConfig.friendService.addFriend(message.fromID, message.toID, userGroupID, friendGroupID)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("addFriend"))
+                    //将该消息已读
+                    LocalConfig.actionMessageService.read(messageID)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("readMessage"))
+                    //创造回执消息
+                    val content = JSONObject()
+                    content["type"] = "RESPONSE"
+                    content["requestID"] = messageID
+                    content["result"] = "ACCEPT"
+                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content.toJSONString())
+                    LocalConfig.actionMessageService.newActionMessage(responseMessage)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("Create response message"))
+                    //尝试立即发送回执消息(若在线)
+                    WebSocketHandler.trySendMessage(responseMessage)
+                    ResponseDataUtils.successData(Friend(message.fromID, friendGroupID))
+                }
+            }
+            //拒绝添加好友
+            "refuse" -> {
+                val messageID = request.getParameter("messageID")?.toLong()
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                val message = LocalConfig.actionMessageService[messageID]
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
+                if (!message.ownerVerify(user.userID)) {
+                    ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID))
+                } else {
+                    LocalConfig.actionMessageService.read(messageID)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("readMessage"))
+                    val content = JSONObject()
+                    content["type"] = "RESPONSE"
+                    content["requestID"] = messageID
+                    content["result"] = "REFUSE"
+                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content.toJSONString())
+                    LocalConfig.actionMessageService.newActionMessage(responseMessage)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("Create response message"))
+                    WebSocketHandler.trySendMessage(responseMessage)
+                    ResponseDataUtils.OK()
+                }
+            }
+            //忽略添加请求
+            "ignore" -> {
+                val messageID = request.getParameter("messageID")?.toLong()
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                val message = LocalConfig.actionMessageService[messageID]
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
+                if (!message.ownerVerify(user.userID)) {
+                    ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID))
+                } else {
+                    LocalConfig.actionMessageService.read(messageID)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("readMessage"))
+                    ResponseDataUtils.OK()
+                }
+            }
+            //未知请求
+            else -> {
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
+            }
+        }
     }
+
 
     @RequestMapping(value = ["/update/{type}"])
     fun update(@PathVariable type: String, request: HttpServletRequest): String {
-        when (type) {
+        return when (type) {
+            //更新性别
             "sex" -> {
-                return updateSex(request)
+                updateSex(request)
             }
+            //更新昵称
             "nickname" -> {
-                return updateNickname(request)
+                updateNickname(request)
             }
+            //更新密码
             "password" -> {
-                return updatePassword(request)
+                updatePassword(request)
             }
+            //更新邮箱
             "email" -> {
-                return updateEmail(request)
+                updateEmail(request)
             }
+            //更新电话号码
             "phone" -> {
-                return updatePhone(request)
+                updatePhone(request)
             }
+            //更新头像
             "avatar" -> {
-                return updateAvatar(request)
+                updateAvatar(request)
             }
+            //更新签名
             "signature" -> {
-                return updateSignature(request)
+                updateSignature(request)
+            }
+            //未知请求
+            else -> {
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
             }
         }
-        return ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
     }
 
     @RequestMapping(value = ["/update"])

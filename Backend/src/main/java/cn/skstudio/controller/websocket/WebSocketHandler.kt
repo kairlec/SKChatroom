@@ -1,9 +1,10 @@
 package cn.skstudio.controller.websocket
 
+import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.pojo.ActionMessage
-import cn.skstudio.pojo.ActionTypeEnum
 import cn.skstudio.pojo.User
-import cn.skstudio.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig
+import com.alibaba.fastjson.JSON
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Controller
 import org.springframework.web.socket.CloseStatus
@@ -46,9 +47,7 @@ class WebSocketHandler : TextWebSocketHandler() {
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val msg = message.payload
         try {
-            for (webSocketSession in webSocketMap) {
-                //TODO收到消息
-            }
+            parseReceiveMessage(msg)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -62,26 +61,37 @@ class WebSocketHandler : TextWebSocketHandler() {
 
         fun isOnline(id: Long) = webSocketMap.containsKey(id)
 
-
-        fun sendMessageToID(fromID: Long, toID: Long, message: String): Boolean {
-            val actionMessage = ActionMessage.create(ActionTypeEnum.NORMAL_MESSAGE, fromID, toID, null, message)
-            LocalConfig.actionMessageService.newActionMessage(actionMessage) ?: return false
-            if (isOnline(toID)) {
-                try {
-                    webSocketMap[toID]!!.sendMessage(TextMessage(message))
-                    LocalConfig.actionMessageService.read(actionMessage)
-                } catch (e: IOException) {
-                    return false
-                }
-            }
-            return true
+        fun trySendMessage(message: ActionMessage) {
+            //TODO 尝试发送消息
         }
 
-        @Throws(IOException::class)
-        fun sendMessageToAll(message: String) {
-            for (webSocketSessionTuple in webSocketMap) {
-                webSocketSessionTuple.value.sendMessage(TextMessage(message))
+        fun sendMessage(message: ActionMessage): Boolean {
+            LocalConfig.actionMessageService.newActionMessage(message) ?: return false
+            if (message.toID == StaticConfig.signIDToAllUser) {
+                sendMessageToAll(message)
             }
+            return if (isOnline(message.toID)) {
+                return try {
+                    webSocketMap[message.toID]!!.sendMessage(TextMessage(JSON.toJSONString(message)))
+                    true
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    false
+                }
+            } else {
+                true
+            }
+        }
+
+        fun sendMessageToAll(message: ActionMessage) {
+            val textMessage = TextMessage(JSON.toJSONString(message))
+            for (webSocketSessionTuple in webSocketMap) {
+                webSocketSessionTuple.value.sendMessage(textMessage)
+            }
+        }
+
+        private fun parseReceiveMessage(textMessage:String){
+
         }
     }
 }
