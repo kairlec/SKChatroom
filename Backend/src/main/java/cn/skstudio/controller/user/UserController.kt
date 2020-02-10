@@ -70,11 +70,26 @@ class UserController {
         return ResponseDataUtils.successData(session.getAttribute("admin"))
     }
 
-    @RequestMapping(value = ["/get/{id}"])
+    @RequestMapping(value = ["/get/id/{id}"])
     fun get(@PathVariable id: Long): String {
         val user: User = LocalConfig.userService.getUserByID(id)
                 ?: return ResponseDataUtils.Error(ServiceErrorEnum.USER_ID_NOT_EXIST)
         return ResponseDataUtils.successData(GuestUser.getInstance(user))
+    }
+
+    @RequestMapping(value = ["/get/message/{type}"])
+    fun get(@PathVariable type: String, request: HttpServletRequest): String {
+        val user = request.session.getAttribute("user") as User
+        return when (type) {
+            "unreadTo" -> {
+                val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID) ?: ArrayList()
+                ResponseDataUtils.successData(messages)
+            }
+            //TODO 暂时只实现了读取未读消息
+            else -> {
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(type))
+            }
+        }
     }
 
 
@@ -105,46 +120,86 @@ class UserController {
     }
 
 
+    @RequestMapping(value = ["search"])
+    fun search(request: HttpServletRequest): String {
+        val self = request.session.getAttribute("user") as User
+        val data = request.getParameter("data")
+        val dataList = ArrayList<GuestUser>()
+        try {
+            val dataID = data.toLong()
+            val user = LocalConfig.userService.getUserByID(dataID)
+            if (user != null && user.userID != self.userID) {
+                dataList.add(GuestUser.getInstance(user))
+            }
+        } catch (e: NumberFormatException) {
+            logger.info("$data is not valid user id")
+        }
+        val list = LocalConfig.userService.getUserByNickname(data)
+        if (list != null) {
+            for (user in list) {
+                if (user.userID != self.userID) {
+                    dataList.add(GuestUser.getInstance(user))
+                }
+            }
+        }
+        return ResponseDataUtils.successData(dataList)
+    }
+
     @RequestMapping(value = ["friend/{type}"])
     fun friend(@PathVariable type: String, request: HttpServletRequest): String {
         val user = request.session.getAttribute("user") as User
-        val targetID = request.getParameter("targetID")?.toLong()
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+        val targetID: Long
+        try {
+            targetID = request.getParameter("targetID")?.toLong()
+                    ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("targetID"))
+        } catch (e: NumberFormatException) {
+            return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(request.getParameter("targetID")))
+        }
         return when (type) {
             //添加好友
             "add" -> {
                 var content = request.getParameter("content")
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("content"))
                 try {
                     val json = JSON.parseObject(content)
-                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data(content))
                     json.getObject("groupID", Long::class.java)
-                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("No groupID"))
                     json["type"] = "REQUEST"
                     content = json.toJSONString()
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT)
+                    return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("parse json object"))
                 }
                 val message = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, user.userID, targetID, null, content)
                 LocalConfig.actionMessageService.newActionMessage(message)
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("Create request message"))
                 ResponseDataUtils.successData(targetID)
             }
             //删除好友
             "delete" -> {
                 LocalConfig.friendService.deleteFriend(user.userID, targetID)
-                        ?: ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+                        ?: ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION.data("deleteFriend"))
                 ResponseDataUtils.OK()
             }
             //同意添加好友
             "accept" -> {
-                //获取添加人在被添加人中的分组
-                val friendGroupID = request.getParameter("groupID")?.toLong()
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("groupID"))
-                //获取要处理的消息ID
-                val messageID = request.getParameter("messageID")?.toLong()
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                val friendGroupID: Long
+                try {
+                    //获取添加人在被添加人中的分组
+                    friendGroupID = request.getParameter("groupID")?.toLong()
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("groupID"))
+                } catch (e: NumberFormatException) {
+                    return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(request.getParameter("groupID")))
+                }
+                val messageID: Long
+                try {
+                    //获取要处理的消息ID
+                    messageID = request.getParameter("messageID")?.toLong()
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                } catch (e: NumberFormatException) {
+                    return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(request.getParameter("messageID")))
+                }
                 //获取要处理的消息
                 val message = LocalConfig.actionMessageService[messageID]
                         ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
@@ -176,8 +231,13 @@ class UserController {
             }
             //拒绝添加好友
             "refuse" -> {
-                val messageID = request.getParameter("messageID")?.toLong()
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                val messageID: Long
+                try {
+                    messageID = request.getParameter("messageID")?.toLong()
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                } catch (e: NumberFormatException) {
+                    return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(request.getParameter("messageID")))
+                }
                 val message = LocalConfig.actionMessageService[messageID]
                         ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
                 if (!message.ownerVerify(user.userID)) {
@@ -198,8 +258,13 @@ class UserController {
             }
             //忽略添加请求
             "ignore" -> {
-                val messageID = request.getParameter("messageID")?.toLong()
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                val messageID: Long
+                try {
+                    messageID = request.getParameter("messageID")?.toLong()
+                            ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID"))
+                } catch (e: NumberFormatException) {
+                    return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(request.getParameter("messageID")))
+                }
                 val message = LocalConfig.actionMessageService[messageID]
                         ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
                 if (!message.ownerVerify(user.userID)) {
@@ -212,7 +277,7 @@ class UserController {
             }
             //未知请求
             else -> {
-                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(type))
             }
         }
     }

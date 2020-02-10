@@ -28,10 +28,22 @@
         WHERE username = #{username}
     </select>
 
+    <select id="getUserByNickname" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE nickname = #{nickname}
+    </select>
+
     <select id="getUserByEmail" resultType="cn.skstudio.pojo.User">
         SELECT *
         FROM user
         WHERE email = #{email}
+    </select>
+
+    <select id="getUserByID" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE user_id = #{id}
     </select>
 
     <insert id="insertUser" parameterType="cn.skstudio.pojo.User">

@@ -1,5 +1,6 @@
 package cn.skstudio.controller.public.activated
 
+import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -104,16 +105,21 @@ class ActivatedController {
         if (existUser != null) {
             return ResponseDataUtils.Error(ServiceErrorEnum.EMAIL_USED)
         }
-        logger.info("尝试发送激活邮件")
-        val thread = Thread(Runnable {
-            try {
-                SendEmail.sendActivitedEmail(domain, user)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        })
-        thread.start()
-        logger.info("邮箱发送线程已启动")
-        return ResponseDataUtils.OK()
+        return if (EditableConfig.mailSender.enable) {
+            logger.info("尝试发送激活邮件")
+            val thread = Thread(Runnable {
+                try {
+                    SendEmail.sendActivitedEmail(domain, user)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            })
+            thread.start()
+            logger.info("邮箱发送线程已启动")
+            ResponseDataUtils.OK("VERIFICATION_REQUIRED")
+        } else {
+            LocalConfig.userService.insertUser(user) ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+            ResponseDataUtils.OK("NO_VERIFICATION_REQUIRED")
+        }
     }
 }

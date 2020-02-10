@@ -35,9 +35,6 @@ open class FilterConfig {
     // 定义过滤器
     @Order(0)
     inner class AllDomainFilter : Filter {
-        @Throws(ServletException::class)
-        override fun init(filterConfig: javax.servlet.FilterConfig) {
-        }
 
         @Throws(IOException::class, ServletException::class)
         override fun doFilter(servletRequest: ServletRequest, servletResponse: ServletResponse, filterChain: FilterChain) {
@@ -52,7 +49,6 @@ open class FilterConfig {
             logger.log(Level.getLevel("REQUEST"), HTTPInfo(servletRequest, response).toString())
         }
 
-        override fun destroy() {}
     }
 
     companion object {

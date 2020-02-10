@@ -9,7 +9,8 @@ data class MailSender(
         var protocol: String,
         var encoding: String,
         var username: String,
-        var password: String
-){
-    constructor():this(25,"","smtp","UTF-8","","")
+        var password: String,
+        var enable: Boolean
+) {
+    constructor() : this(25, "", "smtp", "UTF-8", "", "", false)
 }

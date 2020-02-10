@@ -21,6 +21,9 @@ interface UserService {
     //根据用户名获取用户
     fun getUserByUsername(username: String): User?
 
+    //根据昵称获取用户列表
+    fun getUserByNickname(nickname: String): List<User>?
+
     //根据ID获取用户
     fun getUserByID(id: Long): User?
 

@@ -62,7 +62,7 @@ class HTTPInfo(request: HttpServletRequest, response: HttpServletResponse) {
         val parameterNames = request.parameterNames
         while (parameterNames.hasMoreElements()) {
             val name = parameterNames.nextElement()
-            val value = request.getHeader(name)
+            val value = request.getParameter(name)
             Parameters[name] = value
         }
         ResponseStatus = response.status

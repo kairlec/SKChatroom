@@ -1,8 +1,10 @@
 package cn.skstudio.service.impl
 
 import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.dao.FriendGroupMapper
 import cn.skstudio.dao.UserMapper
 import cn.skstudio.exception.ServiceErrorEnum
+import cn.skstudio.pojo.Group
 import cn.skstudio.pojo.User
 import cn.skstudio.service.UserService
 import cn.skstudio.utils.SendEmail
@@ -14,6 +16,9 @@ import java.util.regex.Pattern
 class UserServiceImpl : UserService {
     @Autowired
     private lateinit var userMapper: UserMapper
+
+    @Autowired
+    private lateinit var friendGroupMapper: FriendGroupMapper
 
     override fun initialize(): Int? {
         return try {
@@ -68,6 +73,15 @@ class UserServiceImpl : UserService {
         }
     }
 
+    override fun getUserByNickname(nickname: String): List<User>? {
+        return try {
+            userMapper.getUserByNickname(nickname)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     override fun getUserByID(id: Long): User? {
         return try {
             userMapper.getUserByID(id)
@@ -80,6 +94,7 @@ class UserServiceImpl : UserService {
     override fun insertUser(user: User): Int? {
         return try {
             userMapper.insertUser(user)
+            friendGroupMapper.addGroup(Group.newDefaultGroup(user.userID))
         } catch (e: Exception) {
             e.printStackTrace()
             null

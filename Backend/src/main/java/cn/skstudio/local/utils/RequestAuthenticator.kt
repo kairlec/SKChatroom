@@ -20,7 +20,7 @@ class RequestAuthenticator {
                 logger.info("无法处理的未登录请求")
                 ServiceErrorEnum.NOT_LOGGED_IN
             } else {
-                logger.info("""在Session取到了" + user.username + "的用户名""")
+                logger.info("""在Session取到了"${user.username}"的用户名""")
                 val targetUser: User? = LocalConfig.userService.getUserByUsername(user.username)
                 if (targetUser == null) {
                     logger.info("新打开session或未找到已有用户")

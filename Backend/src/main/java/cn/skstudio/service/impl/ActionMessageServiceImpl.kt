@@ -50,6 +50,24 @@ class ActionMessageServiceImpl : ActionMessageService {
         }
     }
 
+    override fun getAllUnreadFromActionMessages(userID: Long): List<ActionMessage>? {
+        return try {
+            actionMessageMapper.getAllUnreadFromActionMessages(userID)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun getAllUnreadToActionMessages(userID: Long): List<ActionMessage>? {
+        return try {
+            actionMessageMapper.getAllUnreadToActionMessages(userID)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     override fun getFromToActionMessage(fromUserID: Long, toUserID: Long, after: LocalDateTime): List<ActionMessage>? {
         return try {
             actionMessageMapper.getFromToActionMessages(fromUserID, toUserID, Timestamp.valueOf(after))

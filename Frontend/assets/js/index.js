@@ -1,7 +1,8 @@
 var $ = layui.$
 var layer = layui.layer
 
-var chat_box_index = layer.open({
+// 主窗口
+var chatBoxIndex = layer.open({
   type: 2,
   closeBtn: 1,
   offset: 'auto',
@@ -17,7 +18,7 @@ var chat_box_index = layer.open({
   resize: true,
   scrollbar: false,
   cancel: function (index, layero) { // 点击关闭时执行最小化
-    layer.min(chat_box_index)
+    layer.min(chatBoxIndex)
     return false
   },
   resizing: function (layero, index) {
@@ -30,6 +31,7 @@ var chat_box_index = layer.open({
   }
 })
 
+// 详细的聊天界面
 function createWindow () {
   layer.open({
     type: 2,

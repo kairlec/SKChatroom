@@ -2,8 +2,6 @@ package cn.skstudio.local.utils
 
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.ResponseData
-import java.io.ByteArrayOutputStream
-import java.io.PrintWriter
 
 
 abstract class ResponseDataUtils private constructor() {
@@ -12,8 +10,8 @@ abstract class ResponseDataUtils private constructor() {
             return ServiceErrorEnum.fromException(e)
         }
 
-        fun OK(): String {
-            return ServiceErrorEnum.NO_ERROR.toString()
+        fun OK(dataObject: Any? = null): String {
+            return ServiceErrorEnum.NO_ERROR.data(dataObject).toString()
         }
 
         fun Error(e: Exception): String {
@@ -24,8 +22,8 @@ abstract class ResponseDataUtils private constructor() {
             return ServiceErrorEnum.toString()
         }
 
-        fun successData(`object`: Any?): String {
-            return ResponseData(0, "OK", `object`).toString()
+        fun successData(dataObject: Any?): String {
+            return ResponseData(0, "OK", dataObject).toString()
         }
     }
 

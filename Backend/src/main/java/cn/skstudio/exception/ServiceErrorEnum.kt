@@ -27,6 +27,7 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     NOT_MULTIPART_FROM_DATA(10005, "不是multipart/form-data请求", null),
     INSUFFICIENT_PARAMETERS(10006, "需要的参数不足", null),
     USER_ID_NOT_EXIST(10007, "用户ID不存在", null),
+    ID_INVALID(10008, "无效的ID", null),
 
     /*用户信息异常*/
 

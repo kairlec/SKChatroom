@@ -1,6 +1,9 @@
 package cn.skstudio.pojo
 
 import cn.skstudio.controller.websocket.WebSocketHandler
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.serializer.SerializerFeature
+import org.apache.logging.log4j.LogManager
 
 data class GuestUser(
         var userID: Long = -1,
@@ -12,9 +15,15 @@ data class GuestUser(
         var signature: String,
         var isOnline: Boolean
 ) {
+    override fun toString(): String {
+        return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue)
+    }
+
     companion object {
+        private val logger = LogManager.getLogger(GuestUser::javaClass)
         fun getInstance(user: User): GuestUser {
-            return GuestUser(user.userID,
+            logger.info("user id = ${user.userID}")
+            val guestUser = GuestUser(user.userID,
                     user.nickname ?: "未设置",
                     if (user.privateEmail!!) "@PRIVATE?" else user.email!!,
                     if (user.privateSex!!) "@PRIVATE?" else user.sex ?: "未知",
@@ -22,6 +31,8 @@ data class GuestUser(
                     if (user.privatePhone!!) "@PRIVATE?" else user.phone ?: "",
                     user.signature ?: "",
                     WebSocketHandler.isOnline(user.userID))
+            logger.info("user id = ${guestUser.userID}")
+            return guestUser
         }
     }
 }

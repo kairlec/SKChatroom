@@ -61,11 +61,7 @@ class WebSocketHandler : TextWebSocketHandler() {
 
         fun isOnline(id: Long) = webSocketMap.containsKey(id)
 
-        fun trySendMessage(message: ActionMessage) {
-            //TODO 尝试发送消息
-        }
-
-        fun sendMessage(message: ActionMessage): Boolean {
+        fun trySendMessage(message: ActionMessage): Boolean {
             LocalConfig.actionMessageService.newActionMessage(message) ?: return false
             if (message.toID == StaticConfig.signIDToAllUser) {
                 sendMessageToAll(message)
@@ -91,7 +87,7 @@ class WebSocketHandler : TextWebSocketHandler() {
         }
 
         private fun parseReceiveMessage(textMessage:String){
-
+            //TODO 收到的消息串处理
         }
     }
 }

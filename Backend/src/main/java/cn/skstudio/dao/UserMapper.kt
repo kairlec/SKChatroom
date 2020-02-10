@@ -24,6 +24,9 @@ interface UserMapper {
     //根据用户名获取用户
     fun getUserByUsername(@Param("username") username: String): User?
 
+    //根据昵称获取用户
+    fun getUserByNickname(@Param("nickname") nickname: String): List<User>?
+
     //根据ID获取用户
     fun getUserByID(@Param("id") id: Long): User?
 

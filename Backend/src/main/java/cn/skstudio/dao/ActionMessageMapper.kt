@@ -15,6 +15,10 @@ interface ActionMessageMapper {
 
     fun getAllToActionMessages(@Param("userID") userID: Long?, @Param("after") after: Timestamp): List<ActionMessage>?
 
+    fun getAllUnreadFromActionMessages(@Param("userID") userID: Long?): List<ActionMessage>?
+
+    fun getAllUnreadToActionMessages(@Param("userID") userID: Long?): List<ActionMessage>?
+
     fun getFromToActionMessages(@Param("fromUserID") fromUserID: Long?, @Param("toUserID") toUserID: Long?, @Param("after") after: Timestamp): List<ActionMessage>?
 
     fun addActionMessage(message: ActionMessage): Int?
@@ -23,5 +27,4 @@ interface ActionMessageMapper {
 
     fun read(@Param("messageID") messageID: Long?): Int?
 
-    //TODO 延缓消息
 }

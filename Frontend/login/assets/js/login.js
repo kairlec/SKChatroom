@@ -113,7 +113,13 @@ function reg (formData, publicKey) {
       if (data.code !== 0) {
         layer.msg('错误:' + data.msg)
       } else {
-        layer.msg('激活链接已发送到邮箱,请查看')
+        if (data.data === 'VERIFICATION_REQUIRED') {
+          layer.msg('激活链接已发送到邮箱,请查看')
+        } else if (data.data === 'NO_VERIFICATION_REQUIRED') {
+          layer.msg('注册成功!')
+        } else {
+          layer.msg('已提交注册信息')
+        }
       }
     },
     error: ajaxError
