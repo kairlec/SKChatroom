@@ -16,15 +16,14 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Controller
 class WebSocketHandler : TextWebSocketHandler() {
-    //新增socket
-    @Throws(Exception::class)
+
+    //新增WebSocket连接
     override fun afterConnectionEstablished(session: WebSocketSession) {
         logger.info("成功建立连接")
         webSocketMap[(session.attributes["user"] as User).userID] = session
         session.sendMessage(TextMessage("成功建立socket连接,ID=" + session.id))
     }
 
-    @Throws(Exception::class)
     override fun handleTransportError(session: WebSocketSession, exception: Throwable) {
         logger.error("连接出错")
         webSocketMap.remove((session.attributes["user"] as User).userID)
@@ -33,7 +32,6 @@ class WebSocketHandler : TextWebSocketHandler() {
         }
     }
 
-    @Throws(Exception::class)
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
         logger.info("连接已关闭：$status")
         webSocketMap.remove((session.attributes["user"] as User).userID)
@@ -43,7 +41,6 @@ class WebSocketHandler : TextWebSocketHandler() {
         return false
     }
 
-    @Throws(Exception::class)
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val msg = message.payload
         try {

@@ -1,7 +1,11 @@
 package cn.skstudio.local.utils
 
+import cn.skstudio.controller.public.user.PublicUserController
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.ResponseData
+import cn.skstudio.pojo.SKImage
+import java.io.IOException
+import javax.servlet.http.HttpServletResponse
 
 
 abstract class ResponseDataUtils private constructor() {
@@ -25,6 +29,20 @@ abstract class ResponseDataUtils private constructor() {
         fun successData(dataObject: Any?): String {
             return ResponseData(0, "OK", dataObject).toString()
         }
+
+        fun writeResponseImage(response: HttpServletResponse, image: SKImage) {
+            response.setDateHeader("Expires", 0)
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
+            response.addHeader("Cache-Control", "post-check=0, pre-check=0")
+            response.setHeader("Pragma", "no-cache")
+            response.contentType = image.contentType
+            try {
+                response.outputStream.use { outputStream -> image.write(outputStream) }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+
     }
 
     init {

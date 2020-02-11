@@ -73,12 +73,15 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     ACCOUNT_NOT_ACTIVATED(30013, "账户尚未激活", null),
 
 
+    //资源异常
+    RESOURCE_NOT_FOUND(80001, "资源不存在", null),
+    RESOURCE_NOT_ALLOWED(80002, "资源不可访问", null),
+    RESOURCE_TOO_BIG(80003, "资源太大", null),
 
     //消息体异常
-    MESSAGE_NOT_EXIST(70001,"消息不存在",null),
-    MESSAGE_NOT_ALLOWED(70002,"消息不被允许",null),
-    MESSAGE_WRONG_FORMAT(70003,"消息格式错误",null),
-
+    MESSAGE_NOT_EXIST(70001, "消息不存在", null),
+    MESSAGE_NOT_ALLOWED(70002, "消息不被允许", null),
+    MESSAGE_WRONG_FORMAT(70003, "消息格式错误", null),
 
 
     //服务器异常

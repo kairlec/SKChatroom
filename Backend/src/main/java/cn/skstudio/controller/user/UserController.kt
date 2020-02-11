@@ -3,6 +3,7 @@ package cn.skstudio.controller.user
 import cn.skstudio.controller.websocket.WebSocketHandler
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
+import cn.skstudio.local.utils.ResourcesUtils
 import cn.skstudio.local.utils.ResponseDataUtils
 import cn.skstudio.pojo.*
 import cn.skstudio.utils.*
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 
 @RequestMapping("/api/user")
@@ -71,23 +73,39 @@ class UserController {
     }
 
     @RequestMapping(value = ["/get/id/{id}"])
-    fun get(@PathVariable id: Long): String {
+    fun getUserInfo(@PathVariable id: Long): String {
         val user: User = LocalConfig.userService.getUserByID(id)
                 ?: return ResponseDataUtils.Error(ServiceErrorEnum.USER_ID_NOT_EXIST)
         return ResponseDataUtils.successData(GuestUser.getInstance(user))
     }
 
     @RequestMapping(value = ["/get/message/{type}"])
-    fun get(@PathVariable type: String, request: HttpServletRequest): String {
+    fun getMessage(@PathVariable type: String, request: HttpServletRequest): String {
         val user = request.session.getAttribute("user") as User
         return when (type) {
             "unreadTo" -> {
                 val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID) ?: ArrayList()
                 ResponseDataUtils.successData(messages)
             }
-            //TODO 暂时只实现了读取未读消息
             else -> {
                 ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(type))
+            }
+        }
+    }
+
+    @RequestMapping(value = ["/get/resource/{type}/{id}"])
+    fun getResource(@PathVariable type: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): String {
+        return when (type) {
+            "Avatar" -> {
+                if (!ResourcesUtils.resourceExists(ResourcesUtils.ResourceType.Avatar, id.toString())) {
+                    ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_NOT_FOUND.data(id))
+                } else {
+                    ResponseDataUtils.writeResponseImage(response, ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()))
+                    ResponseDataUtils.successData(id)
+                }
+            }
+            else -> {
+                ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
             }
         }
     }
@@ -281,7 +299,6 @@ class UserController {
             }
         }
     }
-
 
     @RequestMapping(value = ["/update/{type}"])
     fun update(@PathVariable type: String, request: HttpServletRequest): String {

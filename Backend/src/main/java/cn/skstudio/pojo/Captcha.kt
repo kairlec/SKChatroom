@@ -8,7 +8,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.util.*
 
-class Captcha private constructor(var captchaString: String, private var skImage: SKImage) {
+class Captcha private constructor(var captchaString: String, var skImage: SKImage) {
 
     fun write(outputStream: OutputStream) {
         skImage.write(outputStream, false)
@@ -80,7 +80,7 @@ class Captcha private constructor(var captchaString: String, private var skImage
             }
             // 释放图形上下文
             g.dispose()
-            return Captcha(strEnsure.toString(), SKImage(image))
+            return Captcha(strEnsure.toString(), SKImage(image,"image/jpeg"))
         }
     }
 }

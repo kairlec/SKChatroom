@@ -33,17 +33,7 @@ class PublicUserController {
             return
         }
         logger.info("请求验证码:" + captcha.captchaString)
-        response.setDateHeader("Expires", 0)
-        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
-        response.addHeader("Cache-Control", "post-check=0, pre-check=0")
-        response.setHeader("Pragma", "no-cache")
-        response.contentType = "image/jpeg"
-        logger.info("输出验证码到流")
-        try {
-            response.outputStream.use { outputStream -> captcha.write(outputStream) }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+        ResponseDataUtils.writeResponseImage(response,captcha.skImage)
     }
 
     @RequestMapping(value = ["/test/captcha"])
