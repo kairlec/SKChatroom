@@ -62,7 +62,7 @@ class UserController {
 
     //endregion
 
-    @RequestMapping(value = ["/onlinecount"])
+    @RequestMapping(value = ["/onlineCount"])
     fun onlineCount(): String {
         return ResponseDataUtils.successData(WebSocketHandler.onlineCount)
     }
@@ -138,7 +138,7 @@ class UserController {
     }
 
 
-    @RequestMapping(value = ["search"])
+    @RequestMapping(value = ["/search"])
     fun search(request: HttpServletRequest): String {
         val self = request.session.getAttribute("user") as User
         val data = request.getParameter("data")
@@ -163,7 +163,7 @@ class UserController {
         return ResponseDataUtils.successData(dataList)
     }
 
-    @RequestMapping(value = ["friend/{type}"])
+    @RequestMapping(value = ["/friend/{type}"])
     fun friend(@PathVariable type: String, request: HttpServletRequest): String {
         val user = request.session.getAttribute("user") as User
         val targetID: Long

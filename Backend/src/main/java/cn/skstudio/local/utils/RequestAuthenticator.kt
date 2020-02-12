@@ -14,7 +14,7 @@ class RequestAuthenticator {
         private val logger: Logger = LogManager.getLogger(RequestAuthenticator::class.java)
         fun authHttpSession(session: HttpSession): ServiceErrorEnum {
             logger.info("获取到session,ID=" + session.id)
-            val user: User? = session.getAttribute("user") as User
+            val user: User? = session.getAttribute("user") as? User
             return if (user == null) {
                 logger.info("新打开session或未找到已有用户")
                 logger.info("无法处理的未登录请求")

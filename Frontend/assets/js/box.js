@@ -1,7 +1,42 @@
 var $ = layui.$
 
 var group = {
-  groupData: [],
+  pExpand: function (jqDOM) {
+    if (!jqDOM.hasClass('layui-show')) {
+      jqDOM.addClass('layui-show')
+      var icon = jqDOM.prev().children('i')
+      console.log(icon)
+      if (icon.hasClass('layui-icon-right')) {
+        icon.removeClass('layui-icon-right')
+        icon.addClass('layui-icon-down')
+      }
+    }
+  },
+  pUexpand: function (jqDOM) {
+    if (jqDOM.hasClass('layui-show')) {
+      jqDOM.removeClass('layui-show')
+      var icon = jqDOM.prev().children('i')
+      console.log(icon)
+      if (icon.hasClass('layui-icon-down')) {
+        icon.removeClass('layui-icon-down')
+        icon.addClass('layui-icon-right')
+      }
+    }
+  },
+  pIsExpanded: function (jqDOM) {
+    return jqDOM.hasClass('layui-show')
+  },
+  pToggleExpanded: function (jqDOM) {
+    if (this.pIsExpanded(jqDOM)) {
+      this.pUexpand(jqDOM)
+    } else {
+      this.pExpand(jqDOM)
+    }
+  },
+  groupListData: new Map(),
+  addOrRefresh: function (data) {
+    this.groupListData.set(data.groupID, data)
+  },
   newGroup: function (groupID, groupName) {
     return (
       $('<div/>').attr({ class: 'layui-colla-item' }).html(
@@ -14,127 +49,138 @@ var group = {
     $('#g' + groupID).append(friend)
   },
   isExpanded: function (groupID) {
-    return $('#g' + groupID).hasClass('layui-show')
+    return pIsExpanded($('#g' + groupID))
   },
   expand: function (groupID) {
-    var theContent = $('#g' + groupID)
-    if (!theContent.hasClass('layui-show')) {
-      theContent.addClass('layui-show')
-    }
+    this.pExpand($('#g' + groupID))
   },
   unexpand: function (groupID) {
-    var theContent = $('#g' + groupID)
-    if (!theContent.hasClass('layui-show')) {
-      theContent.removeClass('layui-show')
-    }
+    this.pUexpand($('#g' + groupID))
   },
   toggleExpanded: function (groupID) {
-    if (this.isExpanded(groupID)) {
-      this.Unexpand(groupID)
-    } else {
-      this.Expand(groupID)
-    }
+    this.pToggleExpanded($('#g' + groupID))
   },
   unexpandAll: function () {
     $('.group').each(function () {
-      var item = $(this)
-      if (item.hasClass('layui-show')) {
-        item.removeClass('layui-show')
-      }
+      group.pUexpand($(this))
     })
   },
   expandAll: function () {
     $('.group').each(function () {
-      var item = $(this)
-      if (!item.hasClass('layui-show')) {
-        item.addClass('layui-show')
-      }
+      group.pExpand($(this))
     })
   },
   toggleExpandedAll: function () {
     $('.group').each(function () {
-      var item = $(this)
-      if (item.hasClass('layui-show')) {
-        item.removeClass('layui-show')
-      } else {
-        item.addClass('layui-show')
-      }
+      group.pToggleExpanded($(this))
     })
   }
 }
 
+var user = {
+  userListData: new Map(),
+  addOrRefresh: function (data) {
+    this.userListData.set(data.userID, data)
+  },
+  // 获取头像
+  getAvatar: function (id, jqImg) {
+    $.ajax({
+      type: 'POST',
+      url: api + '/get/resource/Avatar/' + id,
+      xhrFields: {
+        withCredentials: true
+      },
+      xhr: function () {
+        var xhr = new XMLHttpRequest()
+        xhr.responseType = 'blob'
+        return xhr
+      },
+      success: function (data) {
+        jqImg.attr('src', window.URL.createObjectURL(data))
+      },
+      error: ajaxError
+    })
+  },
+  newFriendDom: function (user) {
+    return (
+      $('<div/>').attr({ class: 'layui-row box-my-list user', id: 'f' + user.userID }).html(
+        $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).html(
+            $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+              $('<img/>').attr({ class: 'box-my-pic', /* 头像链接 */ src: 'assets/images/1.png' }))))).append(
+        $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).html(
+            $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(user.nickName)).append(
+            $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).html(user.signture))))
+    )
+  }
+
+}
 $(() => {
-  /* 屏蔽浏览器右键 */
   document.oncontextmenu = () => {
     parent.closeMenu()
     return false
   }
+
   $('#group').on('click', '.layui-colla-title', function () {
-    var theContent = $(this).next('.layui-colla-content')
-    if (theContent.hasClass('layui-show')) {
-      theContent.removeClass('layui-show')
-    } else {
-      theContent.addClass('layui-show')
-    }
+    var theContent = $(this).next('.group')
+    group.toggleExpanded(theContent.attr('id').substr(1))
   })
+
   $('.box-btn-list-li').on('click', function () {
     var index = $(this).index()
     $('.box-btn-content').removeClass('layui-show').eq(index).addClass('layui-show')
   })
+
   // 在父页面打开聊天窗口
   $('#group').on('click', '.box-my-list', function () {
-    parent.createWindow($(this).attr('id'))
+    parent.createWindow(user.userListData.get($(this).attr('id').substr(1)))
   })
 
   $('#group').on('contextmenu', '.layui-colla-item', function (event) {
     parent.menuIndex = parent.mouseRightMenu.open(getGroupData($(this).children('.group').attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
-      layer.alert(JSON.stringify(data))
+      switch (data.type) {
+        case 1:// 展开/收缩
+          break
+        case 2:// 重命名
+          break
+        case 3:// 删除分组
+          break
+      }
     })
     return false
   })
 
-  addGroup(group.newGroup(123, '哈哈'))
-  addGroup(group.newGroup(456, '哈哈哈哈'))
-  group.addFriendInGroup(newFriend(), 123)
-  group.addFriendInGroup(newFriend(), 456)
+  $('#group').on('contextmenu', '.user', function (event) {
+    parent.menuIndex = parent.mouseRightMenu.open(getUserData($(this).attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
+      switch (data.type) {
+        case 1:// 打开会话
+          parent.createWindow(user.userListData.get(data.data))
+          break
+        case 2:// 删除好友
+          break
+        case 3:
+          break
+      }
+    })
+    return false
+  })
+
+  $.ajax({
+    type: 'POST',
+    url: api.getGroupList,
+    xhrFields: {
+      withCredentials: true
+    },
+    success: function (data) {
+
+    },
+    error: ajaxError
+  })
 })
 
 function swap () { }
 
 function addGroup (group) {
   $('#group').append(group)
-}
-
-function newFriend (data) {
-  return (
-    $('<div/>').attr({ class: 'layui-row box-my-list user', id: 'f' + '' }).html(
-      $('<div/>').attr({ class: 'layui-col-xs2' }).html(
-        $('<div/>').attr({ class: 'layui-row' }).html(
-          $('<div/>').attr({ class: 'layui-col-xs12' }).html(
-            $('<img/>').attr({ class: 'box-my-pic', /* 头像链接 */ src: 'assets/images/1.png' }))))).append(
-      $('<div/>').attr({ class: 'layui-col-xs10' }).html(
-        $('<div/>').attr({ class: 'layui-row' }).html(
-          $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html('沙雕好友1')).append(
-          $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).html('个性签名'))))
-  )
-}
-
-// 获取验证码
-function getAvatar (id, jqImg) {
-  $.ajax({
-    type: 'POST',
-    url: api + '/get/resource/Avatar/' + id,
-    xhrFields: {
-      withCredentials: true
-    },
-    xhr: function () {
-      var xhr = new XMLHttpRequest()
-      xhr.responseType = 'blob'
-      return xhr
-    },
-    success: function (data) {
-      jqImg.attr('src', window.URL.createObjectURL(data))
-    },
-    error: ajaxError
-  })
 }

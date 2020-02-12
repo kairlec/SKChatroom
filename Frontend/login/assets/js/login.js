@@ -88,10 +88,10 @@ function login (formData, publicKey) {
           getCaptcha()
           showCaptcha()
         } else {
-          layer.msg('登录失败:' + data.msg)
+          layer.msg('登录失败:' + data.message)
         }
       } else {
-        layer.msg('OK')
+        self.location = window.location.href.replace('login', '')
       }
     },
     error: ajaxError
@@ -111,7 +111,7 @@ function reg (formData, publicKey) {
     success: function (data) {
       endWait()
       if (data.code !== 0) {
-        layer.msg('错误:' + data.msg)
+        layer.msg('错误:' + data.message)
       } else {
         if (data.data === 'VERIFICATION_REQUIRED') {
           layer.msg('激活链接已发送到邮箱,请查看')
@@ -232,4 +232,17 @@ $(function () {
   $('#captcha_img').on('click', newCaptcha)
   $('#reg').on('click', toRegTab)
   $('#login').on('click', toLoginTab)
+  $.ajax({
+    type: 'POST',
+    url: api.loginStatus,
+    xhrFields: {
+      withCredentials: true
+    },
+    success: function (data) {
+      if (data.code !== 0) {
+        self.location = window.location.href.replace('login', '')
+      }
+    },
+    error: ajaxError
+  })
 })
