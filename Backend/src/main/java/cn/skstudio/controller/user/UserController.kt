@@ -414,6 +414,7 @@ class UserController {
         }
         LocalConfig.userService.updateUser(updateUser) ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
         user.sex = sex
+
         return ResponseDataUtils.successData(sex)
     }
 
