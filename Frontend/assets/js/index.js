@@ -5,6 +5,8 @@ var mouseRightMenu = layui.mouseRightMenu
 var chatBoxIndex
 // 右键菜单
 var menuIndex
+// 用户自己的信息
+var selfData
 function getAvatar (id, jqImg) {
   $.ajax({
     type: 'POST',
@@ -25,17 +27,32 @@ function getAvatar (id, jqImg) {
 }
 start()
 function start () {
+  var waitIndex = layer.msg('连接中', {
+    icon: 16,
+    shade: 0.3,
+    time: 0
+  })
   $.ajax({
     type: 'POST',
+    dataType: 'json',
     url: api.loginStatus,
     xhrFields: {
       withCredentials: true
     },
     success: function (data) {
       if (data.code === 30007) {
-        window.location.href = '/login'
+        window.location.href = 'login'
+      } else if (data.code !== 0) {
+        layer.close(waitIndex)
+        var msg = data.message || '连接失败'
+        layer.confirm(msg + ',是否重新连接', { icon: 3, title: '错误' }, function (index) {
+          start()
+          layer.close(index)
+        })
+        return
       }
-      console.log(data.data)
+      layer.close(waitIndex)
+      selfData = data.data
       chatBoxIndex = layer.open({
         type: 2,
         closeBtn: 1,
@@ -55,21 +72,22 @@ function start () {
         cancel: function (index, layero) { // 点击关闭时执行最小化
           layer.min(chatBoxIndex)
           return false
-        },
-        resizing: function (layero, index) {
-          var body = layer.getChildFrame('body', index)
-          console.log(body)
-          // var iframeWin = window[layero.find('iframe')[0].name] // 得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
-          // console.log(body.html()) // 得到iframe页的body内容
-          console.log(body.find('#toolbar').html())
-          console.log(layero)
         }
+        // resizing: function (layero, index) {
+        //   var body = layer.getChildFrame('body', index)
+        //   console.log(body)
+        //   // var iframeWin = window[layero.find('iframe')[0].name] // 得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+        //   // console.log(body.html()) // 得到iframe页的body内容
+        //   console.log(body.find('#toolbar').html())
+        //   console.log(layero)
+        // }
       })
       if (data.data.avatar !== null && data.data.avatar !== '@Default?') {
         getAvatar(data.data.userID, $('#myAvatar'))
       }
     },
     error: function () {
+      layer.close(waitIndex)
       layer.confirm('连接到服务器失败,是否重新连接?', { icon: 3, title: '提示' }, function (index) {
         start()
         layer.close(index)

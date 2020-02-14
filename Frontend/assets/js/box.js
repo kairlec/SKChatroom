@@ -1,5 +1,11 @@
 var $ = layui.$
 
+var ui = {
+  addGroup: function (group) {
+    $('#group').append(group)
+  }
+}
+
 var group = {
   pExpand: function (jqDOM) {
     if (!jqDOM.hasClass('layui-show')) {
@@ -37,12 +43,12 @@ var group = {
   addOrRefresh: function (data) {
     this.groupListData.set(data.groupID, data)
   },
-  newGroup: function (groupID, groupName) {
+  newGroup: function (group) {
     return (
       $('<div/>').attr({ class: 'layui-colla-item' }).html(
         $('<h2/>').attr({ class: 'layui-colla-title' }).html(
-          $('<i/>').attr({ class: 'layui-icon layui-icon-right' })).append(groupName)).append(
-        $('<div/>').attr({ class: 'layui-colla-content group', id: 'g' + groupID }))
+          $('<i/>').attr({ class: 'layui-icon layui-icon-right' })).append(group.groupName)).append(
+        $('<div/>').attr({ class: 'layui-colla-content group', id: 'g' + group.groupID }))
     )
   },
   addFriendInGroup: function (friend, groupID) {
@@ -116,6 +122,7 @@ var user = {
   }
 
 }
+
 $(() => {
   document.oncontextmenu = () => {
     parent.closeMenu()
@@ -166,21 +173,33 @@ $(() => {
     return false
   })
 
+  $('#self-signature').text(parent.selfData.signture || '')
+
   $.ajax({
     type: 'POST',
     url: api.getGroupList,
+    dataType: 'json',
     xhrFields: {
       withCredentials: true
     },
     success: function (data) {
-
+      $.each(data.data, function (index, item) {
+        group.addOrRefresh(item)
+        ui.addGroup(group.newGroup(item))
+      })
     },
     error: ajaxError
   })
 })
 
-function swap () { }
+function ajaxError (jqXHR, textStatus, errorThrown) {
+  if (errorThrown === null || errorThrown.length === 0) {
+    layer.msg('错误:' + jqXHR.statusText)
+  } else {
+    layer.msg('错误:' + errorThrown)
+  }
+}
 
-function addGroup (group) {
-  $('#group').append(group)
+function error (msg) {
+
 }

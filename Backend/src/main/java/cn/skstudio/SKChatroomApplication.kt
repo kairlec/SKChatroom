@@ -76,7 +76,9 @@ open class SKChatroomApplication {
             }
 
             try {
-                Files.createDirectory(Path.of("Resources"))
+                if(Files.notExists(Path.of("Resources"))){
+                    Files.createDirectory(Path.of("Resources"))
+                }
             } catch (e: IOException) {
                 logger.fatal("Can't create resources dir")
                 e.printStackTrace()

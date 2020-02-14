@@ -9,7 +9,7 @@
     <select id="getUserGroup" resultType="cn.skstudio.pojo.Group">
         SELECT *
         FROM friend_group
-        WHERE group_id = #{groupID}
+        WHERE user_id = #{userID}
     </select>
 
 

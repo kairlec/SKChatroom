@@ -9,6 +9,8 @@ interface UserService {
     //初始化数据表(建表)
     fun initialize(): Int?
 
+    fun initializeAdmin():Int?
+
     //获取所有普通用户
     fun getAll(): List<User>?
 

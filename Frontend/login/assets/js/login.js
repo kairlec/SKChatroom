@@ -239,8 +239,8 @@ $(function () {
       withCredentials: true
     },
     success: function (data) {
-      if (data.code !== 0) {
-        self.location = window.location.href.replace('login', '')
+      if (data.code === 0) {
+        window.location.href = '..'
       }
     },
     error: ajaxError

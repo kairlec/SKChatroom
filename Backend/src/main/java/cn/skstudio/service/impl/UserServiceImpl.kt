@@ -23,14 +23,28 @@ class UserServiceImpl : UserService {
     override fun initialize(): Int? {
         return try {
             userMapper.initialize()
-            val user = User()
-            user.userID = 1
-            user.admin = true
-            user.username = "skadmin"
-            user.updatePassword("skadmin")
-            user.updateNickname("管理员")
-            user.email = ""
-            userMapper.initializeAdmin(user)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun initializeAdmin(): Int? {
+        return try {
+            val adminList = getAllAdmin()
+            if (adminList == null || adminList.isEmpty()) {
+                val user = User()
+                user.userID = 1
+                user.admin = true
+                user.username = "skadmin"
+                user.updatePassword("skadmin")
+                user.updateNickname("管理员")
+                user.email = ""
+                userMapper.initializeAdmin(user)
+                friendGroupMapper.addGroup(Group.newDefaultGroup(user.userID))
+            } else {
+                1
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null

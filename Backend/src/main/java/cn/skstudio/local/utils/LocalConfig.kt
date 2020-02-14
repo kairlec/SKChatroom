@@ -45,6 +45,9 @@ class LocalConfig {
         if (mailSenderService.initialize() == null) {
             logger.warn("Init database table [MailSender] failed")
         }
+        if(userService.initializeAdmin()==null){
+            logger.warn("Init user admin failed")
+        }
         logger.info("Init finished")
     }
 
