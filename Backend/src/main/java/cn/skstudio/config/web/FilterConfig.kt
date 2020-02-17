@@ -1,5 +1,11 @@
 package cn.skstudio.config.web
 
+/**
+ * @author: Kairlec
+ * @version: 1.0
+ * @description: 过滤器配置
+ */
+
 import cn.skstudio.pojo.json.HTTPInfo
 import org.apache.catalina.filters.RemoteIpFilter
 import org.apache.logging.log4j.Level
@@ -25,14 +31,13 @@ open class FilterConfig {
     open fun testFilterRegistration(): FilterRegistrationBean<AllDomainFilter> {
         val registration = FilterRegistrationBean<AllDomainFilter>()
         registration.filter = AllDomainFilter()
-        // 过滤应用程序中所有资源,当前应用程序根下的所有文件包括多级子目录下的所有文件，注意这里*前有“/”
+        // 过滤应用程序中所有资源
         registration.addUrlPatterns("/*")
-        // 过滤器顺序
         registration.order = 1
         return registration
     }
 
-    // 定义过滤器
+    // 作为内部类定义过滤器
     @Order(0)
     inner class AllDomainFilter : Filter {
 
@@ -46,6 +51,7 @@ open class FilterConfig {
             response.setHeader("Access-Control-Allow-Credentials", "true")
             response.setHeader("Cache-Control", "no-cache")
             filterChain.doFilter(servletRequest, servletResponse)
+            //最后记录一下这次请求内容和结果
             logger.log(Level.getLevel("REQUEST"), HTTPInfo(servletRequest, response).toString())
         }
 

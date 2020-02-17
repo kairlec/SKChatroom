@@ -1,10 +1,11 @@
 package cn.skstudio.controller.websocket
 
 import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.pojo.ActionMessage
 import cn.skstudio.pojo.User
-import cn.skstudio.local.utils.LocalConfig
 import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.JSONObject
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Controller
 import org.springframework.web.socket.CloseStatus
@@ -21,7 +22,7 @@ class WebSocketHandler : TextWebSocketHandler() {
     override fun afterConnectionEstablished(session: WebSocketSession) {
         logger.info("成功建立连接")
         webSocketMap[(session.attributes["user"] as User).userID] = session
-        session.sendMessage(TextMessage("成功建立socket连接,ID=" + session.id))
+        session.sendMessage(warpData("成功建立socket连接,ID=" + session.id,"Message"))
     }
 
     override fun handleTransportError(session: WebSocketSession, exception: Throwable) {
@@ -44,7 +45,7 @@ class WebSocketHandler : TextWebSocketHandler() {
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
         val msg = message.payload
         try {
-            parseReceiveMessage(msg)
+            parseReceiveMessage(msg, session)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -76,15 +77,29 @@ class WebSocketHandler : TextWebSocketHandler() {
             }
         }
 
+        private fun warpData(data: Any?, type: String): TextMessage {
+            val webSocketMessageObject = JSONObject()
+            webSocketMessageObject["type"] = type
+            webSocketMessageObject["data"] = data
+            return TextMessage(JSON.toJSONString(webSocketMessageObject))
+        }
+
         fun sendMessageToAll(message: ActionMessage) {
-            val textMessage = TextMessage(JSON.toJSONString(message))
+            val textMessage = warpData(message, "Message")
             for (webSocketSessionTuple in webSocketMap) {
                 webSocketSessionTuple.value.sendMessage(textMessage)
             }
         }
 
-        private fun parseReceiveMessage(textMessage:String){
-            //TODO 收到的消息串处理
+        private fun parseReceiveMessage(textMessage: String, senderSession: WebSocketSession) {
+            val json = JSON.parseObject(textMessage)
+            if (json["type"] == "HeartBeat") {
+                senderSession.sendMessage(warpData(null, "HeartBeat"))
+                return;
+            } else {
+                logger.info(json["data"])
+                //TODO 收到的消息串处理
+            }
         }
     }
 }

@@ -96,6 +96,15 @@ class UserServiceImpl : UserService {
         }
     }
 
+    override fun searchUserByNickname(nickname: String): List<User>? {
+        return try {
+            userMapper.searchUserByNickname(nickname)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     override fun getUserByID(id: Long): User? {
         return try {
             userMapper.getUserByID(id)

@@ -86,3 +86,9 @@
 	line-height: 38px;
 	font-size: 16px;
 }
+.msgdot{
+	left: -3px !important;
+    top: -15px !important;
+    position: relative;
+	font-size: 10px !important;
+}

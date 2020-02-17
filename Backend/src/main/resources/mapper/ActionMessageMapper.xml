@@ -2,45 +2,56 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cn.skstudio.dao.ActionMessageMapper">
 
+    <resultMap id="ActionMessageMap" type="cn.skstudio.pojo.ActionMessage">
+        <id column="message_id" property="messageID"/>
+        <result column="action_type" property="action"/>
+        <result column="from_id" property="fromID"/>
+        <result column="to_id" property="toID"/>
+        <result column="time" property="time"/>
+        <result column="topic" property="topic"/>
+        <result column="context" property="context"/>
+        <result column="is_read" property="isRead"/>
+    </resultMap>
+
     <update id="initialize">
         CREATE TABLE IF NOT EXISTS action_message(message_id BIGINT NOT NULL PRIMARY KEY,action_type VARCHAR(32) NOT NULL,from_id BIGINT NOT NULL, FOREIGN KEY(from_id) REFERENCES user(user_id),to_id BIGINT NOT NULL, FOREIGN KEY(to_id) REFERENCES user(user_id),time DATETIME NOT NULL,topic VARCHAR(128),context NVARCHAR(1024) NOT NULL,is_read BOOL NOT NULL);
     </update>
 
-    <select id="get" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="get" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE message_id = #{messageID}
     </select>
 
-    <select id="getAllFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="getAllFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE from_id = #{userID}
         AND time >= #{after}
     </select>
 
-    <select id="getAllUnreadFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="getAllUnreadFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE from_id = #{userID}
         AND is_read = false
     </select>
 
-    <select id="getAllToActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="getAllToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE to_id = #{userID}
         AND time >= #{after}
     </select>
 
-    <select id="getAllUnreadToActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="getAllUnreadToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE to_id = #{userID}
         AND is_read = false
     </select>
 
-    <select id="getFromToActionMessages" resultType="cn.skstudio.pojo.ActionMessage">
+    <select id="getFromToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE from_id = #{fromUserID}

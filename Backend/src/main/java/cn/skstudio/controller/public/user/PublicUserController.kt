@@ -1,5 +1,10 @@
 package cn.skstudio.controller.public.user
 
+/**
+ * @author: Kairlec
+ * @description: 公开的用户接口类
+ */
+
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.local.utils.ResponseDataUtils

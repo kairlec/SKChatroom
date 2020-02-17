@@ -1,9 +1,15 @@
 var needCaptcha = false
 
-function debug (data) {
-  if (typeof (DEBUG) !== 'undefined') {
-    console.log(data)
+function getFatherPath () {
+  var url
+  if (document.location.href.endsWith('/index.html')) {
+    url = document.location.href.substr(0, document.location.href.length - 11)
+  } else {
+    url = document.location.href
   }
+  var index = url.substr(1).lastIndexOf('/')
+  var result = url.substr(0, index + 1)
+  return result
 }
 
 function wait (msg) {
@@ -42,9 +48,6 @@ function hideCaptcha () {
 
 function ajaxError (jqXHR, textStatus, errorThrown) {
   endWait()
-  debug(jqXHR)
-  debug(textStatus)
-  debug(errorThrown)
   if (errorThrown === null || errorThrown.length === 0) {
     layer.msg('错误:' + jqXHR.statusText)
   } else {
@@ -91,7 +94,7 @@ function login (formData, publicKey) {
           layer.msg('登录失败:' + data.message)
         }
       } else {
-        self.location = window.location.href.replace('login', '')
+        window.location.href = '..'
       }
     },
     error: ajaxError
@@ -102,7 +105,7 @@ function reg (formData, publicKey) {
   var encrypt = new JSEncrypt()
   encrypt.setPublicKey(publicKey)
   formData.field.password = encrypt.encrypt(formData.field.password)
-  formData.field.domain = window.location.href.replace('login', 'activate')
+  formData.field.domain = getFatherPath() + '/activate'
   $.ajax({
     type: 'POST',
     dataType: 'json',

@@ -58,7 +58,7 @@ function start () {
         closeBtn: 1,
         offset: 'auto',
         title: [
-          '<img id="myAvatar" src="assets/images/1.png"><div class="box-title-container"><div class="box-title-name">' + data.data.nickname + '<span class="layui-bg-green layui-badge-dot"></span></div></div>',
+          '<img id="myAvatar" src="assets/images/1.png"><div class="box-title-container"><div class="box-title-name">' + selfData.nickname + '<span class="layui-bg-green layui-badge-dot"></span></div></div>',
           'height:40px;line-height:80px;border:none;'
         ],
         id: 'box',
@@ -82,8 +82,8 @@ function start () {
         //   console.log(layero)
         // }
       })
-      if (data.data.avatar !== null && data.data.avatar !== '@Default?') {
-        getAvatar(data.data.userID, $('#myAvatar'))
+      if (selfData.avatar !== null && selfData.avatar !== '@Default?') {
+        getAvatar(selfData.userID, $('#myAvatar'))
       }
     },
     error: function () {
@@ -115,9 +115,10 @@ function createWindow (user) {
   layer.open({
     type: 2,
     title: [
-      '<img src="assets/images/1.png"><div class="title-container"><div class="title-name">' + user.id + '</div><span class="title-msg">对方正在输入...</span></div>',
+      '<img src="assets/images/1.png"><div class="title-container"><div class="title-name">' + user.nickname + '</div><span class="title-msg">' + user.signature + '</span></div>',
       'height:80px;line-height:80px;'
     ],
+    id: 'u' + user.id,
     maxmin: true,
     shade: 0,
     shadeClose: false,
@@ -143,4 +144,11 @@ function createWindow (user) {
 /* 提示框 */
 function message (msg) {
   layer.msg(msg)
+}
+function ajaxError (jqXHR, textStatus, errorThrown) {
+  if (errorThrown === null || errorThrown.length === 0) {
+    layer.msg('错误:' + jqXHR.statusText)
+  } else {
+    layer.msg('错误:' + errorThrown)
+  }
 }

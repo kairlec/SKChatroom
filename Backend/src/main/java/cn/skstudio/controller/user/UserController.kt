@@ -6,7 +6,9 @@ import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResourcesUtils
 import cn.skstudio.local.utils.ResponseDataUtils
 import cn.skstudio.pojo.*
-import cn.skstudio.utils.*
+import cn.skstudio.utils.Network
+import cn.skstudio.utils.PasswordCoder
+import cn.skstudio.utils.UserChecker
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
 import org.apache.logging.log4j.LogManager
@@ -85,6 +87,8 @@ class UserController {
         return when (type) {
             "unreadTo" -> {
                 val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID) ?: ArrayList()
+                logger.info(messages)
+                logger.info(JSON.toJSONString(messages))
                 ResponseDataUtils.successData(messages)
             }
             else -> {
@@ -142,6 +146,7 @@ class UserController {
     fun search(request: HttpServletRequest): String {
         val self = request.session.getAttribute("user") as User
         val data = request.getParameter("data")
+                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
         val dataList = ArrayList<GuestUser>()
         try {
             val dataID = data.toLong()
@@ -152,7 +157,7 @@ class UserController {
         } catch (e: NumberFormatException) {
             logger.info("$data is not valid user id")
         }
-        val list = LocalConfig.userService.getUserByNickname(data)
+        val list = LocalConfig.userService.searchUserByNickname(data)
         if (list != null) {
             for (user in list) {
                 if (user.userID != self.userID) {
@@ -160,6 +165,7 @@ class UserController {
                 }
             }
         }
+        logger.info(dataList)
         return ResponseDataUtils.successData(dataList)
     }
 

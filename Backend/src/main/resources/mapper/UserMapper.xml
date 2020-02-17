@@ -34,6 +34,12 @@
         WHERE nickname = #{nickname}
     </select>
 
+    <select id="searchUserByNickname" resultType="cn.skstudio.pojo.User">
+        SELECT *
+        FROM user
+        WHERE nickname LIKE CONCAT('%', #{nickname}, '%')
+    </select>
+
     <select id="getUserByEmail" resultType="cn.skstudio.pojo.User">
         SELECT *
         FROM user

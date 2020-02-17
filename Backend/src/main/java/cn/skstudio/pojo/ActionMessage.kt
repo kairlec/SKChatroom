@@ -4,11 +4,13 @@ import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.utils.SnowFlake
 import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.annotation.JSONType
 import com.alibaba.fastjson.serializer.SerializerFeature
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 @NoArg
+@JSONType(serializeEnumAsJavaBean = true)
 data class ActionMessage(
         var messageID: Long,//消息ID
         var action: ActionTypeEnum,//消息类型

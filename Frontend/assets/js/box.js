@@ -55,7 +55,7 @@ var group = {
     $('#g' + groupID).append(friend)
   },
   isExpanded: function (groupID) {
-    return pIsExpanded($('#g' + groupID))
+    return this.pIsExpanded($('#g' + groupID))
   },
   expand: function (groupID) {
     this.pExpand($('#g' + groupID))
@@ -90,6 +90,10 @@ var user = {
   },
   // 获取头像
   getAvatar: function (id, jqImg) {
+    var user = this.userListData.get(data.userID)
+    if (user.avatarCache) {
+      jqImg.attr('src', user.avatarData)
+    }
     $.ajax({
       type: 'POST',
       url: api + '/get/resource/Avatar/' + id,
@@ -102,7 +106,9 @@ var user = {
         return xhr
       },
       success: function (data) {
-        jqImg.attr('src', window.URL.createObjectURL(data))
+        user.avatarCache = true
+        user.avatarData = window.URL.createObjectURL(data)
+        jqImg.attr('src', user.avatarData)
       },
       error: ajaxError
     })
@@ -119,8 +125,105 @@ var user = {
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(user.nickName)).append(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).html(user.signture))))
     )
+  },
+  searchUser: function (searchData, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.searchUser,
+      data: { data: searchData },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) {
+        warpResponseData(data, fnSuccess)
+      },
+      error: ajaxError
+    })
+  },
+  addFriend: function (friendID, groupID, message, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.addFriend,
+      data: { targetID: friendID, content: { groupID: groupID, msg: message } },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  deleteFriend: function (friendID, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.deleteFriend,
+      data: { targetID: friendID },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  acceptAddFriend: function (messageID, groupID, friendID, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.acceptAddFriend,
+      data: { targetID: friendID, groupID: groupID, messageID: messageID },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  refuseAddFriend: function (messageID, friendID, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.refuseAddFriend,
+      data: { targetID: friendID, messageID: messageID },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  ignoreAddFriend: function (messageID, friendID, fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.ignoreAddFriend,
+      data: { targetID: friendID, messageID: messageID },
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  getUnreadMessage: function (fnSuccess) {
+    $.ajax({
+      type: 'POST',
+      url: api.getMessage + 'unreadTo',
+      dataType: 'json',
+      xhrFields: {
+        withCredentials: true
+      },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
   }
+}
 
+function outArr (data) {
+  for (var i = 0; i < data.length; i++) {
+    console.log(data[i])
+  }
 }
 
 $(() => {
@@ -200,6 +303,13 @@ function ajaxError (jqXHR, textStatus, errorThrown) {
   }
 }
 
-function error (msg) {
+function responseError (msg) {
 
+}
+
+var warpResponseData = (data, callback) => {
+  if (data.code !== 0) {
+    responseError(data)
+  }
+  !callback || callback(data.data)
 }
