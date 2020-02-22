@@ -3,7 +3,7 @@
 <mapper namespace="cn.skstudio.dao.FriendMapper">
 
     <update id="initialize">
-        CREATE TABLE IF NOT EXISTS friend(user_id BIGINT NOT NULL,FOREIGN KEY(user_group_id) REFERENCES user(user_id),friend_id BIGINT NOT NULL,FOREIGN KEY(user_group_id) REFERENCES user(user_id),user_group_id BIGINT NOT NULL, FOREIGN KEY(user_group_id) REFERENCES friend_group(group_id),friend_group_id BIGINT NOT NULL, FOREIGN KEY(friend_group_id) REFERENCES friend_group(group_id))
+        CREATE TABLE IF NOT EXISTS friend(user_id BIGINT NOT NULL,FOREIGN KEY(user_id) REFERENCES user(user_id),friend_id BIGINT NOT NULL,FOREIGN KEY(friend_id) REFERENCES user(user_id),user_group_id BIGINT NOT NULL, FOREIGN KEY(user_group_id) REFERENCES friend_group(group_id),friend_group_id BIGINT NOT NULL, FOREIGN KEY(friend_group_id) REFERENCES friend_group(group_id))
     </update>
 
     <select id="getFriendList" resultType="cn.skstudio.pojo.Friend">

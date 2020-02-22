@@ -7,7 +7,7 @@ function getBlankData () {
 
 function getGroupData (groupID) {
   return [
-    { data: groupID, type: 1, title: group.isExpanded(groupID) ? '缩起' : '展开' },
+    { data: groupID, type: 1, title: ui.GroupPand.isExpanded(groupID) ? '缩起' : '展开' },
     { data: groupID, type: 2, title: '重命名' },
     { data: groupID, type: 3, title: '删除分组' }
   ]

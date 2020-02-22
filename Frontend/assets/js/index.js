@@ -7,27 +7,75 @@ var chatBoxIndex
 var menuIndex
 // 用户自己的信息
 var selfData
-function getAvatar (id, jqImg) {
+
+function getMainBoxWindow () {
+  return window['layui-layer-iframe' + chatBoxIndex]
+}
+
+var ChatBoxMap = {
+  mp: new Map(),
+  hasOpen: function (userID) {
+    console.log(ChatBoxMap)
+    console.log(userID)
+    return this.mp.has(userID)
+  },
+  addWindow: function (userID, index) {
+    this.mp.set(userID, index)
+  },
+  closeID: function (userID) {
+    if (this.hasOpen(userID)) {
+      layer.close(this.mp.get(userID))
+      this.mp.delete(userID)
+    }
+  },
+  getWindow: function (userID) {
+    if (!this.hasOpen(userID)) {
+      return null
+    }
+    return window['layui-layer-iframe' + this.mp.get(userID)]
+  },
+  getWindowDOM: function (userID) {
+    if (!this.hasOpen(userID)) {
+      return null
+    }
+    return $('#u' + userID).parent()
+  },
+  /**
+   * @description 向指定窗口发送消息
+   * @param {String} userID 用户的ID,以此来确定窗口对象
+   * @param {Obejct} message 消息体,必须是ActionMessage消息体
+   */
+  sendMessage: function (userID, message) {
+    console.log(message)
+    if (!this.hasOpen(userID)) {
+      console.log(userID + 'is not open')
+      return
+    }
+    this.getWindow(userID).receive(message)
+  },
+  remove: function (userID) {
+    this.mp.delete(userID)
+  }
+
+}
+
+function getSelfAvatar (id, jqImg) {
   $.ajax({
     type: 'POST',
     url: api.getAvatarResource + id,
+    dataType: 'json',
     xhrFields: {
       withCredentials: true
     },
-    xhr: function () {
-      var xhr = new XMLHttpRequest()
-      xhr.responseType = 'blob'
-      return xhr
-    },
     success: function (data) {
-      jqImg.attr('src', window.URL.createObjectURL(data))
+      jqImg.attr('src', data.data)
     },
     error: ajaxError
   })
 }
 start()
 function start () {
-  var waitIndex = layer.msg('连接中', {
+  const waitIndex = layer.msg('连接中', {
     icon: 16,
     shade: 0.3,
     time: 0
@@ -58,7 +106,7 @@ function start () {
         closeBtn: 1,
         offset: 'auto',
         title: [
-          '<img id="myAvatar" src="assets/images/1.png"><div class="box-title-container"><div class="box-title-name">' + selfData.nickname + '<span class="layui-bg-green layui-badge-dot"></span></div></div>',
+          '<img id="self-avatar" src="assets/images/1.png"><div class="box-title-container"><div class="box-title-name"><span id="self-nickname">' + selfData.nickname + '</span><span id="self-status" class="layui-bg-green layui-badge-dot"></span></div></div>',
           'height:40px;line-height:80px;border:none;'
         ],
         id: 'box',
@@ -69,6 +117,9 @@ function start () {
         content: 'box.html',
         resize: true,
         scrollbar: false,
+        success: function (layero, index) {
+          console.log(`this box html is ${index}`)
+        },
         cancel: function (index, layero) { // 点击关闭时执行最小化
           layer.min(chatBoxIndex)
           return false
@@ -83,7 +134,7 @@ function start () {
         // }
       })
       if (selfData.avatar !== null && selfData.avatar !== '@Default?') {
-        getAvatar(selfData.userID, $('#myAvatar'))
+        getSelfAvatar(selfData.userID, $('#self-avatar'))
       }
     },
     error: function () {
@@ -118,7 +169,7 @@ function createWindow (user) {
       '<img src="assets/images/1.png"><div class="title-container"><div class="title-name">' + user.nickname + '</div><span class="title-msg">' + user.signature + '</span></div>',
       'height:80px;line-height:80px;'
     ],
-    id: 'u' + user.id,
+    id: 'u' + user.userID,
     maxmin: true,
     shade: 0,
     shadeClose: false,
@@ -126,9 +177,14 @@ function createWindow (user) {
     content: 'chat.html',
     scrollbar: false,
     success: function (layero, index) {
-      console.log(layero, index)
+      ChatBoxMap.addWindow(user.userID, index)
+      var totalWindow = window['layui-layer-iframe' + index]
+      totalWindow.totalUserID = user.userID
+      totalWindow.ready()
+      console.log(ChatBoxMap)
     },
-    resizing: function (layero, index) {
+    resizing: function (layero) {
+      var index = ChatBoxMap.get($(this).attr('id'))
       layero.height(function (n, c) {
         var minHeight = parseInt(layero.css('min-height'))
         if (c < minHeight) {
@@ -137,6 +193,14 @@ function createWindow (user) {
         return c
       })
       layero.find('iframe').height(layero.height() - layero.find('.layui-layer-title').height())
+      var body = layer.getChildFrame('body', index)
+      var bodyHeight = parseInt(body.children('.chat-body').height())
+      var contentBox = body.find('#content')
+      contentBox.height(bodyHeight - 180)
+      contentBox.find('.msgContent').css('max-width', (parseInt(contentBox.width()) - 132) + 'px')
+    },
+    cancel: function (index, layero) {
+      ChatBoxMap.remove(user.userID)
     }
   })
 }
@@ -150,5 +214,31 @@ function ajaxError (jqXHR, textStatus, errorThrown) {
     layer.msg('错误:' + jqXHR.statusText)
   } else {
     layer.msg('错误:' + errorThrown)
+  }
+}
+
+function updateSelfData (data) {
+  selfData = data
+  $('#self-nickname').text(data.nickname)
+}
+
+var actionMessagePool = {
+  mp: new Map(),
+  addMessage: function (targetID, message) {
+    var array = this.mp.get(targetID)
+    if (typeof (array) === 'undefined') {
+      array = new Array(0)
+      this.mp.set(targetID, array)
+    }
+    array.push(message)
+  },
+  getMessage: function (targetID) {
+    console.log(targetID)
+    var array = this.mp.get(targetID)
+    if (typeof (array) === 'undefined') {
+      array = new Array(0)
+      this.mp.set(targetID, array)
+    }
+    return array
   }
 }

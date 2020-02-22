@@ -1,4 +1,4 @@
-#myAvatar{
+#self-avatar{
   width:35px !important;
   height: 35px !important;
   margin-left: -12px;
@@ -27,7 +27,7 @@
 .layui-layer-title .title-msg {
   display: inline-block;
   position: relative;
-  color: red;
+  color: black;
   top: -15px;
   left: 10px;
 }
@@ -42,6 +42,7 @@
   top: -17px;
   left: 10px;
   height: 20px;
+  
 }
 
 .layui-badge-dot {
@@ -50,6 +51,9 @@
   padding: 0;
   border-radius: 50%;
   margin-left: 5px;
+}
+
+.layui-bg-green{
   background-color: #5FB878 !important;
 }
 
@@ -63,3 +67,17 @@
   bottom: 0
 }
 
+.cs-form-label {
+  padding: 9px 0px !important;
+}
+
+.layui-layer-page .layui-layer-content {
+  position: relative;
+  padding: 20px;
+  line-height: 24px;
+  word-break: break-all;
+  overflow: hidden;
+  font-size: 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}

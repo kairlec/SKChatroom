@@ -3,6 +3,7 @@ package cn.skstudio.pojo
 import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.exception.ServiceErrorEnum
+import cn.skstudio.fastjson.LongToStringSerializer
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.utils.SendEmail
 import cn.skstudio.utils.SnowFlake
@@ -12,21 +13,24 @@ import com.alibaba.fastjson.serializer.SerializerFeature
 import org.springframework.util.DigestUtils
 
 @NoArg
-data class User(var userID: Long,
-                var username: String,
-                @JSONField(serialize = false) var password: String,
-                var nickname: String?,
-                var email: String?,
-                var sex: String?,
-                var avatar: String?,
-                var phone: String?,
-                var lastSessionID: String?,
-                var IP: String?,
-                var signature: String?,
-                var privateSex: Boolean?,
-                var privatePhone: Boolean?,
-                var privateEmail: Boolean?,
-                var admin: Boolean?
+data class User(
+        @JSONField(serializeUsing = LongToStringSerializer::class)
+        var userID: Long,
+        var username: String,
+        @JSONField(serialize = false)
+        var password: String,
+        var nickname: String?,
+        var email: String?,
+        var sex: String?,
+        var avatar: String?,
+        var phone: String?,
+        var lastSessionID: String?,
+        var IP: String?,
+        var signature: String?,
+        var privateSex: Boolean?,
+        var privatePhone: Boolean?,
+        var privateEmail: Boolean?,
+        var admin: Boolean?
 ) {
 
     constructor() : this(-1, "@", "@", null, null, null, null, null, null, null, null, true, false, false, false)
@@ -35,7 +39,7 @@ data class User(var userID: Long,
         return this.password == DigestUtils.md5DigestAsHex((password + userID).toByteArray())
     }
 
-    fun updatePassword(password: String): ServiceErrorEnum {
+    fun updatePassword(password: String, encrypt: Boolean = true): ServiceErrorEnum {
         return when {
             password.length > StaticConfig.maxPasswordLength -> {
                 ServiceErrorEnum.PASSWORD_TOO_LONG
@@ -44,7 +48,11 @@ data class User(var userID: Long,
                 ServiceErrorEnum.WEAK_PASSWORD
             }
             else -> {
-                this.password = DigestUtils.md5DigestAsHex((password + userID).toByteArray())
+                if (encrypt) {
+                    this.password = DigestUtils.md5DigestAsHex((password + userID).toByteArray())
+                } else {
+                    this.password = password
+                }
                 ServiceErrorEnum.NO_ERROR
             }
         }

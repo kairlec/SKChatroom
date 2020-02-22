@@ -1,85 +1,188 @@
 /*
  * 聊天窗口
  */
-.chat-body{
-	padding: 10px;
-	width:100%;
-	height: 100%;
+.chat-body {
+  padding: 10px;
+  width: 100%;
+  height: 100%;
 }
-.chat-content{
-	padding: 10px 10px 0;
+
+.chat-content {
+  padding: 10px 10px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
 }
-.chat-toolbar-icon{
-	font-size: 25px;
-	margin:0 10px;
-	color: #333;
+
+.chat-toolbar-icon {
+  font-size: 25px;
+  margin: 0 10px;
+  color: #333;
 }
-#chat-text{
-	width: 100%;
-	border:none;
-	resize:none;
-	/*overflow: hidden;*/
-	height: 100%;
+
+#chat-text {
+  width: 100%;
+  border: none;
+  resize: none;
+  /*overflow: hidden;*/
+  height: 100%;
 }
-.chat-btn{
-	float: right;
-	margin:10px;
+
+.chat-btn {
+  float: right;
+  margin: 10px;
 }
-.chat-btn-container{
-	
-}
+
+.chat-btn-container {}
+
 .layui-layer-btn {
-    position: relative;
-    top: -30px;
+  position: relative;
+  top: -30px;
 }
+
 .layui-layer-btn0 {
-    height: 28px;
-    line-height: 28px;
-    margin: 5px 5px 0;
-    padding: 0 15px;
-    border: 1px solid #dedede;
-    background-color: #fff;
-    color: #333;
-    border-radius: 2px;
-    font-weight: 400;
-    cursor: pointer;
-    text-decoration: none;
+  height: 28px;
+  line-height: 28px;
+  margin: 5px 5px 0;
+  padding: 0 15px;
+  border: 1px solid #dedede;
+  background-color: #fff;
+  color: #333;
+  border-radius: 2px;
+  font-weight: 400;
+  cursor: pointer;
+  text-decoration: none;
 }
-.layui-layer-btn0:hover{
-	color: #333;
-	background-color: #F0F0F0;
+
+.layui-layer-btn0:hover {
+  color: #333;
+  background-color: #F0F0F0;
 }
+
 .layui-layer-btn1 {
-    height: 28px;
-    line-height: 28px;
-    margin: 5px 5px 0;
-    padding: 0 15px;
-    border: 1px solid #dedede;
-    background-color: #fff;
-    color: #333;
-    border-radius: 2px;
-    font-weight: 400;
-    cursor: pointer;
-    text-decoration: none;
-    border-color: #1E9FFF;
-    background-color: #1E9FFF;
-    color: #fff;
+  height: 28px;
+  line-height: 28px;
+  margin: 5px 5px 0;
+  padding: 0 15px;
+  border: 1px solid #dedede;
+  background-color: #fff;
+  color: #333;
+  border-radius: 2px;
+  font-weight: 400;
+  cursor: pointer;
+  text-decoration: none;
+  border-color: #1E9FFF;
+  background-color: #1E9FFF;
+  color: #fff;
 }
-.chat-toolbar-hr{
-	position: fixed;
-	left: 0;
-	bottom: 170px;
-	width: 100%;
+
+.chat-toolbar-hr {
+  position: fixed;
+  left: 0;
+  bottom: 170px;
+  width: 100%;
 }
-.chat-tolbar-container{
-	position: fixed;
-	left: 0;
-	bottom: 145px;
+
+.chat-tolbar-container {
+  position: fixed;
+  left: 0;
+  bottom: 145px;
 }
-.chat-toolbar-chatmain{
-	position: fixed;
-	left: 0;
-	bottom: 40px;
-	height: 100px;
-	width: 100%;
+
+.chat-toolbar-chatmain {
+  position: fixed;
+  left: 0;
+  bottom: 40px;
+  height: 100px;
+  width: 100%;
+}
+
+.sender {
+  clear: both
+}
+
+.sender div:nth-of-type(1) {
+  float: left
+}
+
+.sender div:nth-of-type(2) {
+  background-color: #40f41a;
+  float: left;
+  margin: 0 20px 10px 15px;
+  padding: 10px 10px 10px 0;
+  border-radius: 7px;
+  position: relative;
+  /*left: 50px;*/
+}
+
+.receiver span,
+.sender span {
+  word-break: normal;
+  width: auto;
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+
+.receiver div:first-child img,
+.sender div:first-child img {
+  width: 40px;
+  height: 40px
+}
+
+.receiver {
+  clear: both
+}
+
+.receiver div:nth-child(1) {
+  float: right
+}
+
+.receiver div:nth-of-type(2) {
+  float: right;
+  background-color: #1E9FFF;
+  margin: 0 10px 10px 20px;
+  padding: 10px 0 10px 10px;
+  border-radius: 7px;
+  position: relative;
+  /*right: 50px;*/
+}
+
+.left_triangle {
+  height: 0;
+  width: 0;
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent #40f41a transparent transparent;
+  position: relative;
+  left: -16px;
+  top: 3px
+}
+
+.right_triangle {
+  height: 0;
+  width: 0;
+  border-width: 8px;
+  border-style: solid;
+  border-color: transparent transparent transparent #1E9FFF;
+  position: relative;
+  right: -16px;
+  top: 3px
+}
+
+#content {
+  height: 248px;
+}
+
+
+.msgContent {
+  /* bottom: 45px; */
+  max-width: 428px;
+  margin-bottom: 10px !important
+}
+
+.sender,
+.receiver {
+  margin-top: -10px;
 }

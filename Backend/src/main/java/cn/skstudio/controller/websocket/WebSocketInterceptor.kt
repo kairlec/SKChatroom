@@ -17,11 +17,10 @@ class WebSocketInterceptor : HttpSessionHandshakeInterceptor() {
         private val logger: Logger = LogManager.getLogger(WebSocketInterceptor::class.java)
     }
 
-    @Throws(Exception::class)
     override fun beforeHandshake(request: ServerHttpRequest, response: ServerHttpResponse, wsHandler: WebSocketHandler, attributes: MutableMap<String, Any>): Boolean {
-        logger.info("WebSocket拦截器启动")
+        logger.debug("WebSocket拦截器启动")
         if (request is ServletServerHttpRequest) {
-            logger.info("WebSocket拦截器请求类型匹配成功")
+            logger.debug("WebSocket拦截器请求类型匹配成功")
             val session = request.servletRequest.session
             val error = RequestAuthenticator.authHttpSession(session)
             if (!error.ok()) {

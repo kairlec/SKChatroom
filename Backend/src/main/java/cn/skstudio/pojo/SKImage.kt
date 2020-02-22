@@ -1,14 +1,13 @@
 package cn.skstudio.pojo
 
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import javax.imageio.ImageIO
-import javax.imageio.stream.ImageInputStream
-import javax.swing.text.html.HTML.Tag.I
 
 class SKImage {
     var bufferedImage: BufferedImage
@@ -39,6 +38,22 @@ class SKImage {
         } else {
             ImageIO.write(bufferedImage, "jpg", outputStream)
         }
+    }
+
+    fun toBase64(Transparent: Boolean = false): String {
+        val formatName: String = if (Transparent) {
+            "png"
+        } else {
+            "jpg"
+        }
+        var bytes: ByteArray = ByteArray(0)
+        ByteArrayOutputStream().use {
+            ImageIO.write(bufferedImage, formatName, it)
+            bytes = it.toByteArray()
+        }
+        var base64String = Base64.getEncoder().encodeToString(bytes).trim();//转换成base64串
+        base64String = base64String.replace("\n", "").replace("\r", "");
+        return "data:${contentType};base64,$base64String"
     }
 
     fun read(file: File) {

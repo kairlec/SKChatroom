@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletResponse
 
 @Component
 class AdminInterceptor : HandlerInterceptor {
-    @Throws(Exception::class)
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val error = RequestAuthenticator.authHttpServletRequest(request, blackAPIList)
         return if (error.ok()) {
@@ -33,5 +32,9 @@ class AdminInterceptor : HandlerInterceptor {
 
             }
         }
+        val pathPatterns: List<String> = ArrayList(listOf(
+                "/api/admin",
+                "/api/admin/*"
+        ))
     }
 }

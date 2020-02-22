@@ -19,7 +19,7 @@ class StaticConfig {
         //密码最短字符个数
         const val minPasswordLength = 6
         //最大昵称字符个数
-        const val maxNickNameLength = 30
+        const val maxNickNameLength = 10
         //最长签名字符个数
         const val maxSignatureLength = 32
         //允许的性别值
@@ -37,7 +37,6 @@ class StaticConfig {
         //全体成员ID标志
         const val signIDToAllUser = -1L
 
-        //默认分组的ID
-        const val defaultFriendGroupID=-1L
+
     }
 }

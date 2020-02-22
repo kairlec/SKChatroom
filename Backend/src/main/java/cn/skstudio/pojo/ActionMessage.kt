@@ -2,19 +2,22 @@ package cn.skstudio.pojo
 
 import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.fastjson.LongToStringSerializer
 import cn.skstudio.utils.SnowFlake
 import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.annotation.JSONType
+import com.alibaba.fastjson.annotation.JSONField
 import com.alibaba.fastjson.serializer.SerializerFeature
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 @NoArg
-@JSONType(serializeEnumAsJavaBean = true)
 data class ActionMessage(
+        @JSONField(serializeUsing = LongToStringSerializer::class)
         var messageID: Long,//消息ID
         var action: ActionTypeEnum,//消息类型
+        @JSONField(serializeUsing = LongToStringSerializer::class)
         var fromID: Long,//发送者ID
+        @JSONField(serializeUsing = LongToStringSerializer::class)
         var toID: Long,//接受者ID
         var time: Timestamp,//消息时间
         var topic: String?,//主题

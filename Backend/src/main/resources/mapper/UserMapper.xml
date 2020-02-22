@@ -77,7 +77,7 @@
                 phone = #{phone},
             </if>
             <if test="signature != null">
-                signature = #{signature}
+                signature = #{signature},
             </if>
             <if test="privateSex != null">
                 private_sex = #{privateSex},

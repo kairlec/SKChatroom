@@ -48,7 +48,10 @@ open class FilterConfig {
             val response = servletResponse as HttpServletResponse
             val originHeader = (servletRequest as HttpServletRequest).getHeader("Origin")
             response.setHeader("Access-Control-Allow-Origin", originHeader)
+            response.setHeader("Access-Control-Max-Age", "86400")
             response.setHeader("Access-Control-Allow-Credentials", "true")
+            response.setHeader("Access-Control-Allow-Methods","GET,POST,OPTIONS")
+            response.setHeader("Access-Control-Allow-Headers","Access-Control,x-ijt")
             response.setHeader("Cache-Control", "no-cache")
             filterChain.doFilter(servletRequest, servletResponse)
             //最后记录一下这次请求内容和结果

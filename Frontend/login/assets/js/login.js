@@ -4,6 +4,9 @@ function getFatherPath () {
   var url
   if (document.location.href.endsWith('/index.html')) {
     url = document.location.href.substr(0, document.location.href.length - 11)
+  }
+  if (document.location.href.endsWith('/')) {
+    url = document.location.href.substr(0, document.location.href.length - 1)
   } else {
     url = document.location.href
   }
@@ -48,6 +51,9 @@ function hideCaptcha () {
 
 function ajaxError (jqXHR, textStatus, errorThrown) {
   endWait()
+  console.log(jqXHR)
+  console.log(textStatus)
+  console.log(errorThrown)
   if (errorThrown === null || errorThrown.length === 0) {
     layer.msg('错误:' + jqXHR.statusText)
   } else {
@@ -133,16 +139,13 @@ function getCaptcha () {
   $.ajax({
     type: 'POST',
     url: api.getCaptcha,
+    dataType: 'json',
     xhrFields: {
       withCredentials: true
     },
-    xhr: function () {
-      var xhr = new XMLHttpRequest()
-      xhr.responseType = 'blob'
-      return xhr
-    },
     success: function (data) {
-      $('#captcha_img').attr('src', window.URL.createObjectURL(data))
+      // $('#captcha_img').attr('src', window.URL.createObjectURL(data))
+      $('#captcha_img').attr('src', data.data)
     },
     error: ajaxError
   })
@@ -152,16 +155,14 @@ function getTestCaptcha () {
   $.ajax({
     type: 'POST',
     url: api.getTestCaptcha,
+    dataType: 'json',
     xhrFields: {
       withCredentials: true
     },
-    xhr: function () {
-      var xhr = new XMLHttpRequest()
-      xhr.responseType = 'blob'
-      return xhr
-    },
     success: function (data) {
-      $('#captcha_img').attr('src', window.URL.createObjectURL(data))
+      console.log(data)
+      // $('#captcha_img').attr('src', window.URL.createObjectURL(data))
+      $('#captcha_img').attr('src', data.data)
     },
     error: ajaxError
   })

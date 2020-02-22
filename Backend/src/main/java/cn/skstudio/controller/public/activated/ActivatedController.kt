@@ -74,9 +74,9 @@ class ActivatedController {
         val user = User()
         user.email = activatedInfo.eM
         user.username = activatedInfo.uN
-        user.password = activatedInfo.pW
-        user.nickname = "默认用户"
         user.userID = User.getNewID()
+        user.updatePassword(activatedInfo.pW)
+        user.nickname = "默认用户"
         user.privateEmail = true
         user.privatePhone = true
         user.privateSex = false
@@ -103,7 +103,7 @@ class ActivatedController {
         //前端提交的所有密码都必须要经过一次RSA公钥加密
         password = PasswordCoder.fromRequest(URLDecoder.decode(password, StandardCharsets.UTF_8)).trim()
         logger.debug("由Request解密的密码:$password")
-        error = user.updatePassword(password)
+        error = user.updatePassword(password, false)//因为还未生成ID,所以不能进行加密
         if (!error.ok()) {
             return ResponseDataUtils.Error(error)
         }
@@ -135,6 +135,7 @@ class ActivatedController {
             ResponseDataUtils.OK("VERIFICATION_REQUIRED")
         } else {
             user.userID = User.getNewID()
+            user.updatePassword(user.password)//生成了新的ID,需要对密码进行一次加密
             user.nickname = "默认用户"
             LocalConfig.userService.insertUser(user) ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
             //返回数据为无需验证

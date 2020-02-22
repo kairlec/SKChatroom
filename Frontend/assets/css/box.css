@@ -50,6 +50,13 @@
 	color:#d2d2d2;
 	font-size: 10px;
 }
+
+.box-my-msg {
+	text-indent: 5px;
+	color: #080707;
+	font-size: 10px;
+}
+
 .box-line-1{
 	white-space:nowrap; 
 	overflow:hidden;
@@ -86,9 +93,26 @@
 	line-height: 38px;
 	font-size: 16px;
 }
-.msgdot{
+.MainMsgdot{
 	left: -3px !important;
     top: -15px !important;
     position: relative;
 	font-size: 10px !important;
+	display: none;
+}
+.GroupMsgdot {
+    left: 5px !important;
+    top: -1px !important;
+    position: relative;
+    font-size: 10px !important;
+}
+
+#toolbar .layui-icon{
+	cursor: pointer;
+}
+
+.UserMsgdot{
+    left: 5px;
+	top: -2px;
+	display: none;
 }

@@ -1,4 +1,4 @@
-function longSock (url, fn, intro = '') {
+function longSock (url, fn, fnResponse, intro = '') {
   let lockReconnect = false // 避免重复连接
   let timeoutFlag = true
   let timeoutSet = null
@@ -71,7 +71,12 @@ function longSock (url, fn, intro = '') {
     ws.onmessage = evt => {
       heartCheck.reset().start()
       var json = JSON.parse(evt.data)
+      console.log(json)
       if (json.type === 'HeartBeat') return
+      if (json.type === 'Response') {
+        fnResponse(json, ws)
+        return
+      }
       fn(json.data, ws)
     }
     ws.onclose = e => {
@@ -96,25 +101,31 @@ function longSock (url, fn, intro = '') {
   createWebSocket()
   return {
     ws: ws,
-    send: async function (message, fnSuccess, fnError) {
+    send: async function (messageObject, fnSuccess, fnError) {
+      console.log('ready to send a message')
+      console.log(messageObject)
       var submit = new Date()
       // 未连接上,等待连接完毕
       while (ws.readyState !== ws.OPEN) {
         if (new Date().getTime() - submit.getTime() > 5000) {
-          !fnError || fnError(message)
+          !fnError || fnError(messageObject)
           return
         }
         await sleep(1)
       }
-      sendMessage(message, 'Message')
-      !fnSuccess || fnSuccess(message)
+      messageObject.timestamp = new Date().getTime().toString()
+      sendMessage(messageObject, 'Message')
+      !fnSuccess || fnSuccess(messageObject)
     }
   }
 }
 
 const handler = (data, ws) => {
   console.log(data)
+  var dataObject = JSON.parse(data)
+  actionMessagePool.addMessage(dataObject.fromID, dataObject)
+  ChatBoxMap.sendMessage(dataObject.fromID, dataObject)
+  getMainBoxWindow().receive(dataObject)
 }
 
-const websocket = longSock(rootAPI.webSocket, handler, 'Main')
-websocket.send('hello')
+var websocket = longSock(rootAPI.webSocket, handler, 'Main')

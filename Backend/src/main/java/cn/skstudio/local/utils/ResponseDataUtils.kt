@@ -1,6 +1,5 @@
 package cn.skstudio.local.utils
 
-import cn.skstudio.controller.public.user.PublicUserController
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.ResponseData
 import cn.skstudio.pojo.SKImage
@@ -31,10 +30,6 @@ abstract class ResponseDataUtils private constructor() {
         }
 
         fun writeResponseImage(response: HttpServletResponse, image: SKImage) {
-            response.setDateHeader("Expires", 0)
-            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
-            response.addHeader("Cache-Control", "post-check=0, pre-check=0")
-            response.setHeader("Pragma", "no-cache")
             response.contentType = image.contentType
             try {
                 response.outputStream.use { outputStream -> image.write(outputStream) }

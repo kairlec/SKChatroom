@@ -2,12 +2,16 @@ package cn.skstudio.pojo
 
 import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.fastjson.LongToStringSerializer
 import cn.skstudio.utils.SnowFlake
+import com.alibaba.fastjson.annotation.JSONField
 
 @NoArg
 data class Group(
+        @JSONField(serializeUsing = LongToStringSerializer::class)
         var groupID: Long,
         var groupOrder: Int?,
+        @JSONField(serializeUsing = LongToStringSerializer::class)
         var userID: Long,
         var groupName: String?
 ) {
@@ -19,11 +23,8 @@ data class Group(
         }
 
         fun newDefaultGroup(userID:Long):Group{
-            return Group(defaultGroupID,-1,userID,"默认分组")
+            return Group(-userID,-1,userID,"默认分组")
         }
-
-        private val defaultGroupID
-            get() = StaticConfig.defaultFriendGroupID
 
     }
 }

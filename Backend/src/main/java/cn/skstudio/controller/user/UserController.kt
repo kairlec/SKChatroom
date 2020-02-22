@@ -81,21 +81,48 @@ class UserController {
         return ResponseDataUtils.successData(GuestUser.getInstance(user))
     }
 
-    @RequestMapping(value = ["/get/message/{type}"])
-    fun getMessage(@PathVariable type: String, request: HttpServletRequest): String {
+    @RequestMapping(value = ["/message/{type}/{typeInfo}"])
+    fun Message(@PathVariable type: String, request: HttpServletRequest, @PathVariable typeInfo: String): String {
         val user = request.session.getAttribute("user") as User
         return when (type) {
-            "unreadTo" -> {
-                val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID) ?: ArrayList()
-                logger.info(messages)
-                logger.info(JSON.toJSONString(messages))
-                ResponseDataUtils.successData(messages)
+            "get" -> {
+                return when (typeInfo) {
+                    "unreadTo" -> {
+                        val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID)
+                                ?: ArrayList()
+                        logger.info(messages)
+                        logger.info(JSON.toJSONString(messages))
+                        ResponseDataUtils.successData(messages)
+                    }
+                    else -> {
+                        ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(typeInfo))
+                    }
+                }
+            }
+            "read" -> {
+                val messageID: Long
+                try {
+                    messageID = typeInfo.toLong()
+                } catch (e: java.lang.NumberFormatException) {
+                    e.printStackTrace()
+                    return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(typeInfo))
+                }
+                val message = LocalConfig.actionMessageService[messageID]?:
+                        return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST)
+                if(!message.ownerVerify(user.userID)){
+                    return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_ALLOWED)
+                }
+                if(LocalConfig.actionMessageService.read(message)!=null){
+                    ResponseDataUtils.successData(message.messageID)
+                }
+                ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
             }
             else -> {
                 ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(type))
             }
         }
     }
+
 
     @RequestMapping(value = ["/get/resource/{type}/{id}"])
     fun getResource(@PathVariable type: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): String {
@@ -104,8 +131,8 @@ class UserController {
                 if (!ResourcesUtils.resourceExists(ResourcesUtils.ResourceType.Avatar, id.toString())) {
                     ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_NOT_FOUND.data(id))
                 } else {
-                    ResponseDataUtils.writeResponseImage(response, ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()))
-                    ResponseDataUtils.successData(id)
+                    //ResponseDataUtils.writeResponseImage(response, ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()))
+                    ResponseDataUtils.successData(ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()).toBase64())
                 }
             }
             else -> {
@@ -346,7 +373,61 @@ class UserController {
 
     @RequestMapping(value = ["/update"])
     fun update(request: HttpServletRequest): String {
-        return ResponseDataUtils.OK()
+        val signature = request.getParameter("signature")
+        val nickname = request.getParameter("nickname")
+        val email = request.getParameter("email")
+        val phone = request.getParameter("phone")
+        val sex = request.getParameter("sex")
+        val user: User = request.session.getAttribute("user") as User
+        val updateUser = user.readyToUpdate()
+        var error: ServiceErrorEnum
+        var edited = false
+        if (email != null && email.isNotBlank()) {
+            edited = true
+            error = updateUser.updateEmail(email)
+            if (!error.ok()) {
+                return ResponseDataUtils.Error(error)
+            }
+        }
+        if (nickname != null && nickname.isNotBlank()) {
+            edited = true
+            error = updateUser.updateNickname(nickname)
+            if (!error.ok()) {
+                return ResponseDataUtils.Error(error)
+            }
+        }
+        if (phone != null) {
+            edited = true
+            error = updateUser.updatePhone(phone)
+            if (!error.ok()) {
+                return ResponseDataUtils.Error(error)
+            }
+        }
+        if (sex != null && sex.isNotBlank()) {
+            edited = true
+            error = updateUser.updateSex(sex)
+            if (!error.ok()) {
+                return ResponseDataUtils.Error(error)
+            }
+        }
+        if (signature != null) {
+            edited = true
+            error = updateUser.updateSignature(signature)
+            if (!error.ok()) {
+                return ResponseDataUtils.Error(error)
+            }
+        }
+        if (!edited) {
+            return ResponseDataUtils.successData(user)
+        }
+        LocalConfig.userService.updateUser(updateUser)
+                ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+        user.signature = signature
+        user.nickname = nickname
+        user.email = email
+        user.sex = sex
+        user.phone = phone
+        return ResponseDataUtils.successData(user)
     }
 
     //region 详细信息更新方法
