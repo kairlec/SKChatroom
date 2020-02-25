@@ -1,8 +1,11 @@
 package cn.skstudio.pojo
 
+import org.apache.logging.log4j.LogManager
+import org.springframework.web.multipart.MultipartFile
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,8 +43,12 @@ class SKImage {
         }
     }
 
-    fun toBase64(Transparent: Boolean = false): String {
-        val formatName: String = if (Transparent) {
+    fun toBase64(Transparent: Boolean? = null): String {
+        var transparent = false
+        if (Transparent == null) {
+            transparent = contentType == "image/png"
+        }
+        val formatName: String = if (transparent) {
             "png"
         } else {
             "jpg"
@@ -61,12 +68,26 @@ class SKImage {
     }
 
     companion object {
+        private val logger = LogManager.getLogger(SKImage::class.java)
         fun isImage(file: File): Boolean {
             if (!ImageIO.getImageReaders(ImageIO.createImageInputStream(file)).hasNext()) {
                 return false
             }
             ImageIO.read(file) ?: return false
             return true
+        }
+
+        @Deprecated("此方法会读取流导致流内数据丢失")
+        fun isImage(inputStream: InputStream): Boolean {
+            ImageIO.read(inputStream) ?: return false
+            return true
+        }
+
+        fun isImage(multipartFile: MultipartFile): Boolean {
+            multipartFile.inputStream.use {
+                ImageIO.read(it) ?: return false
+                return true
+            }
         }
     }
 }

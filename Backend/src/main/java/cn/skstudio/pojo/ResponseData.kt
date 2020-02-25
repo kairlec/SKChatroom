@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager
 
 open class ResponseData(@JSONField(name = "code", ordinal = 0)
                         final override val code: Int, @JSONField(name = "msg", ordinal = 1)
-                        final override val message: String, @JSONField(name = "data", ordinal = 2)
+                        final override val msg: String, @JSONField(name = "data", ordinal = 2)
                         final override val data: Any?
 ) : ResponseDataInterface {
 

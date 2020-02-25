@@ -28,8 +28,7 @@ class UserInterceptor : HandlerInterceptor {
             }
         }
         val pathPatterns: List<String> = ArrayList(listOf(
-                "/api/user",
-                "/api/user/*"
+                "/api/user/**"
         ))
     }
 }

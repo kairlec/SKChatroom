@@ -8,7 +8,7 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 
 @JSONType(serializeEnumAsJavaBean = true)
-enum class ServiceErrorEnum(override val code: Int, override val message: String, override var data: Any?) : ResponseDataInterface {
+enum class ServiceErrorEnum(override val code: Int, override val msg: String, override var data: Any?) : ResponseDataInterface {
 
     //无异常
     NO_ERROR(0, "OK", null),
@@ -48,6 +48,9 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     EMAIL_USED(63001, "邮箱已被使用", null),
     //性别
     UNKNOWN_SEX(64000, "未知性别", null),
+    GROUP_NOT_EXISTS(65000, "组不存在", null),
+    GROUP_NAME_TOO_LONG(65001, "组名太长", null),
+    GROUP_NOT_ALLOW(65002, "组操作不被允许", null),
 
     //签名异常
     SIGNATURE_TOO_LONG(65001, "签名太长", null),
@@ -77,6 +80,8 @@ enum class ServiceErrorEnum(override val code: Int, override val message: String
     RESOURCE_NOT_FOUND(80001, "资源不存在", null),
     RESOURCE_NOT_ALLOWED(80002, "资源不可访问", null),
     RESOURCE_TOO_BIG(80003, "资源太大", null),
+    FILE_EMPTY(80004, "文件为空", null),
+    RESOURCE_TYPE_MISMATCH(80005, "资源类型不匹配", null),
 
     //消息体异常
     MESSAGE_NOT_EXIST(70001, "消息不存在", null),

@@ -19,6 +19,7 @@ var api = (() => {
     acceptAddFriend: privateUserAPI + 'friend/accept',
     refuseAddFriend: privateUserAPI + 'friend/refuse',
     ignoreAddFriend: privateUserAPI + 'friend/ignore',
-    update: privateUserAPI + 'update'
+    update: privateUserAPI + 'update',
+    updateAvatar: privateUserAPI + 'update/avatar'
   }
 })()

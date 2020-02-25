@@ -55,4 +55,13 @@ class FriendGroupServiceImpl : FriendGroupService {
             null
         }
     }
+
+    override fun getGroup(groupID: Long): Group? {
+        return try {
+            friendGroupMapper.getGroup(groupID)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

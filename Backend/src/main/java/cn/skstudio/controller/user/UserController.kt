@@ -5,16 +5,18 @@ import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResourcesUtils
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.UserChecker
 import cn.skstudio.pojo.*
 import cn.skstudio.utils.Network
 import cn.skstudio.utils.PasswordCoder
-import cn.skstudio.utils.UserChecker
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
+import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.LogManager
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
@@ -25,66 +27,82 @@ class UserController {
 
     //region 登录相关方法
 
-    @RequestMapping(value = ["/login"], produces = ["application/json; charset=utf-8"])
+    //登录
+    @RequestMapping(value = ["/login"])
     fun login(request: HttpServletRequest): String {
-        val session = request.getSession(true)
-        val userChecker = UserChecker(request)
-        val error = userChecker.check()
+        val session = request.session
+        val error = UserChecker.check(request)
         if (!error.ok()) {
             logger.info("用户验证失败:$error")
             return ResponseDataUtils.Error(error)
         }
-        val user: User = LocalConfig.userService.getUserByUsername(userChecker.username!!)!!
+        //验证已经通过表示存在用户,下面的user直接取非null
+        val user: User = LocalConfig.userService.getUserByUsername(error.data as String)!!
         logger.info(user.toString())
         val updateUser = User.readyToUpdate(user)
         updateUser.lastSessionID = session.id
         updateUser.IP = Network.getIpAddress(request)
-        val result: Int? = LocalConfig.userService.updateLoginInfo(updateUser)
-        if (result == null) {
+        if (LocalConfig.userService.updateLoginInfo(updateUser) == null) {
             logger.warn("Update user login info failed")
         }
         logger.info("用户验证成功")
+        logger.info(user.avatar)
+        if (user.avatar != null && user.avatar != "@DEFAULT?") {
+            val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, user.avatar!!).toBase64()
+            user.avatar = base64Data
+            logger.info(user.avatar)
+        }
         session.setAttribute("user", user)
         session.maxInactiveInterval = 60 * 60
         return ResponseDataUtils.successData(user)
     }
 
-
-    @RequestMapping(value = ["/logout"], produces = ["application/json; charset=utf-8"])
+    //登出
+    @RequestMapping(value = ["/logout"])
     fun logout(request: HttpServletRequest): String {
-        val session = request.getSession(true)
-        session.invalidate()
+        request.session.invalidate()
         return ResponseDataUtils.OK()
     }
 
-    @RequestMapping(value = ["/relogin"], produces = ["application/json; charset=utf-8"])
+    //登录状态
+    @RequestMapping(value = ["/relogin"])
     fun relogin(session: HttpSession): String {
+        logger.info((session.getAttribute("user") as User).avatar)
         return ResponseDataUtils.successData(session.getAttribute("user"))
     }
 
     //endregion
 
+    //在线人数
     @RequestMapping(value = ["/onlineCount"])
     fun onlineCount(): String {
         return ResponseDataUtils.successData(WebSocketHandler.onlineCount)
     }
 
+    //是否为管理员
     @RequestMapping(value = ["/isAdmin"])
     fun isAdmin(session: HttpSession): String {
         return ResponseDataUtils.successData(session.getAttribute("admin"))
     }
 
+    //获取用户信息
     @RequestMapping(value = ["/get/id/{id}"])
     fun getUserInfo(@PathVariable id: Long): String {
         val user: User = LocalConfig.userService.getUserByID(id)
                 ?: return ResponseDataUtils.Error(ServiceErrorEnum.USER_ID_NOT_EXIST)
+        if (user.avatar != null && user.avatar != "@DEFAULT?") {
+            val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, user.avatar!!).toBase64()
+            user.avatar = base64Data
+        }
         return ResponseDataUtils.successData(GuestUser.getInstance(user))
     }
 
+    //消息处理接口
     @RequestMapping(value = ["/message/{type}/{typeInfo}"])
-    fun Message(@PathVariable type: String, request: HttpServletRequest, @PathVariable typeInfo: String): String {
+    fun message(@PathVariable type: String, request: HttpServletRequest, @PathVariable typeInfo: String): String {
         val user = request.session.getAttribute("user") as User
         return when (type) {
+            //获取消息
             "get" -> {
                 return when (typeInfo) {
                     "unreadTo" -> {
@@ -93,6 +111,10 @@ class UserController {
                         logger.info(messages)
                         logger.info(JSON.toJSONString(messages))
                         ResponseDataUtils.successData(messages)
+                    }
+                    //TODO 历史消息
+                    "" -> {
+                        ""
                     }
                     else -> {
                         ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(typeInfo))
@@ -107,12 +129,12 @@ class UserController {
                     e.printStackTrace()
                     return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID.data(typeInfo))
                 }
-                val message = LocalConfig.actionMessageService[messageID]?:
-                        return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST)
-                if(!message.ownerVerify(user.userID)){
+                val message = LocalConfig.actionMessageService[messageID]
+                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST)
+                if (!message.ownerVerify(user.userID)) {
                     return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_ALLOWED)
                 }
-                if(LocalConfig.actionMessageService.read(message)!=null){
+                if (LocalConfig.actionMessageService.read(message) != null) {
                     ResponseDataUtils.successData(message.messageID)
                 }
                 ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
@@ -127,14 +149,14 @@ class UserController {
     @RequestMapping(value = ["/get/resource/{type}/{id}"])
     fun getResource(@PathVariable type: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): String {
         return when (type) {
-            "Avatar" -> {
-                if (!ResourcesUtils.resourceExists(ResourcesUtils.ResourceType.Avatar, id.toString())) {
-                    ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_NOT_FOUND.data(id))
-                } else {
-                    //ResponseDataUtils.writeResponseImage(response, ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()))
-                    ResponseDataUtils.successData(ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()).toBase64())
-                }
-            }
+//            "Avatar" -> {
+//                if (!ResourcesUtils.resourceExists(ResourcesUtils.ResourceType.Avatar, id.toString())) {
+//                    ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_NOT_FOUND.data(id))
+//                } else {
+//                    //ResponseDataUtils.writeResponseImage(response, ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()))
+//                    ResponseDataUtils.successData(ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, id.toString()).toBase64())
+//                }
+//            }
             else -> {
                 ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
             }
@@ -518,8 +540,42 @@ class UserController {
         return ResponseDataUtils.successData(phone)
     }
 
-    private fun updateAvatar(request: HttpServletRequest?): String {
-        return ResponseDataUtils.OK()
+    private fun updateAvatar(request: HttpServletRequest): String {
+        val user: User = request.session.getAttribute("user") as User
+        val multiRequest = request as MultipartHttpServletRequest
+        logger.info("收到上传命令")
+        val fileNames = multiRequest.fileNames
+        if (!fileNames.hasNext()) {
+            return ResponseDataUtils.Error(ServiceErrorEnum.FILE_EMPTY)
+        }
+        val file = multiRequest.getFile(fileNames.next()) ?: return ResponseDataUtils.Error(ServiceErrorEnum.FILE_EMPTY)
+        if (file.size > 2048 * 1024) {
+            return ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_TOO_BIG)
+        }
+        if (file.isEmpty) {
+            return ResponseDataUtils.Error(ServiceErrorEnum.FILE_EMPTY)
+        }
+        if (file.contentType != "image/png" && file.contentType != "image/jpeg") {
+            logger.info("contentType匹配失败:" + file.contentType)
+            return ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_TYPE_MISMATCH)
+        }
+        val fileType = FilenameUtils.getExtension(file.originalFilename).toLowerCase()
+        val fileName = if (fileType.isNotEmpty()) {
+            user.userID.toString() + "." + fileType
+        } else {
+            user.userID.toString()
+        }
+        if (!SKImage.isImage(file)) {
+            logger.info("图像流识别失败")
+            return ResponseDataUtils.Error(ServiceErrorEnum.RESOURCE_TYPE_MISMATCH)
+        }
+        ResourcesUtils.saveResource(ResourcesUtils.ResourceType.Avatar, fileName, file, true)
+        val updateUser = User.readyToUpdate(user)
+        updateUser.avatar = fileName
+        LocalConfig.userService.updateUser(updateUser) ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+        val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, fileName).toBase64()
+        user.avatar = base64Data
+        return ResponseDataUtils.OK(base64Data)
     }
 
     //endregion

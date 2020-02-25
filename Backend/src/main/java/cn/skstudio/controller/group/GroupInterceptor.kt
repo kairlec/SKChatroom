@@ -1,4 +1,4 @@
-package cn.skstudio.controller.admin
+package cn.skstudio.controller.group
 
 /**
  * @author: Kairlec
@@ -14,12 +14,11 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @Component
-class AdminInterceptor : HandlerInterceptor {
+class GroupInterceptor : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val error = RequestAuthenticator.authHttpServletRequest(request, blackAPIList)
         return if (error.ok()) {
-            //在请求验证器中的成功data会返回用户身份
-            "UserAdmin".equals(error.data as String, true)
+            true
         } else {
             response.writer.write(ResponseDataUtils.Error(error))
             false
@@ -33,7 +32,7 @@ class AdminInterceptor : HandlerInterceptor {
             }
         }
         val pathPatterns: List<String> = ArrayList(listOf(
-                "/api/admin/**"
+                "/api/group/**"
         ))
     }
 }

@@ -15,4 +15,6 @@ interface FriendGroupService {
 
     fun getUserGroup(userID: Long): List<Group>?
 
+    fun getGroup(groupID: Long): Group?
+
 }

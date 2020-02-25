@@ -78,7 +78,7 @@ data class User(
     }
 
     fun updateNickname(nickname: String): ServiceErrorEnum {
-        val realNickname = nickname.trim { it <= ' ' }
+        val realNickname = nickname.trim()
         return when {
             realNickname.isEmpty() -> {
                 ServiceErrorEnum.NICKNAME_EMPTY

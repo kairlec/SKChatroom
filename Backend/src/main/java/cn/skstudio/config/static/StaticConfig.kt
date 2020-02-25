@@ -22,6 +22,8 @@ class StaticConfig {
         const val maxNickNameLength = 10
         //最长签名字符个数
         const val maxSignatureLength = 32
+        //最长组名
+        const val maxGroupName = 8
         //允许的性别值
         val allowSexString: ArrayList<String?> = object : ArrayList<String?>() {
             init {

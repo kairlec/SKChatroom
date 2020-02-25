@@ -18,8 +18,8 @@ class Captcha private constructor(var captchaString: String, var skImage: SKImag
         return captchaString
     }
 
-    fun check(captchaString: String): Boolean {
-        return captchaString.equals(this.captchaString, ignoreCase = true)
+    fun check(captchaString: String, ignoreCase: Boolean = true): Boolean {
+        return captchaString.equals(this.captchaString, ignoreCase)
     }
 
     companion object {
@@ -68,7 +68,6 @@ class Captcha private constructor(var captchaString: String, var skImage: SKImag
             }
             //取随机产生的码
             val strEnsure = StringBuilder()
-            //4代表4位验证码,如果要生成更多位的认证码,则加大数值
             for (i in 0 until captchaCount) {
                 strEnsure.append(mapTable[(mapTable.size * Math.random()).toInt()])
                 // 将认证码显示到图象中
@@ -80,7 +79,7 @@ class Captcha private constructor(var captchaString: String, var skImage: SKImag
             }
             // 释放图形上下文
             g.dispose()
-            return Captcha(strEnsure.toString(), SKImage(image,"image/jpeg"))
+            return Captcha(strEnsure.toString(), SKImage(image, "image/jpeg"))
         }
     }
 }

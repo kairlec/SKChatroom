@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -75,15 +73,6 @@ open class SKChatroomApplication {
                 exitProcess(-1)
             }
 
-            try {
-                if(Files.notExists(Path.of("Resources"))){
-                    Files.createDirectory(Path.of("Resources"))
-                }
-            } catch (e: IOException) {
-                logger.fatal("Can't create resources dir")
-                e.printStackTrace()
-                exitProcess(-1)
-            }
         }
 
         @JvmStatic

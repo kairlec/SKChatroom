@@ -12,6 +12,11 @@
         WHERE user_id = #{userID}
     </select>
 
+    <select id="getGroup" resultType="cn.skstudio.pojo.Group">
+        SELECT *
+        FROM friend_group
+        WHERE group_id = #{groupID}
+    </select>
 
     <insert id="addGroup" parameterType="cn.skstudio.pojo.Group">
         INSERT INTO friend_group(group_id,group_order,user_id,group_name)

@@ -60,7 +60,7 @@ const uiMethod = {
           $('<div/>').attr({ class: 'layui-col-xs2' }).html(
             $('<div/>').attr({ class: 'layui-row' }).html(
               $('<div/>').attr({ class: 'layui-col-xs12' }).html(
-                $('<img/>').attr({ class: 'box-my-pic', src: 'assets/images/2.png' }))))).append(
+                $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
           $('<div/>').attr({ class: 'layui-col-xs10' }).html(
             $('<div/>').attr({ class: 'layui-row' }).html(
               $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
@@ -68,7 +68,6 @@ const uiMethod = {
                 $('<i>').attr({ class: 'layui-bg-red layui-badge-dot UserMsgdot' }))).append(
               $('<div/>').attr({ class: 'layui-col-xs12 box-my-msg box-line-1' }).text(message))))
       )
-      userMethod.getAvatar(user.userID, DOM.find('.box-my-pic'))
       return DOM
     },
     addMessageDOM: function (DOM) {
@@ -192,43 +191,13 @@ const uiMethod = {
 const userMethod = {
   userListData: new Map(),
   addOrRefreshUser: function (data) {
-    if (data.avatar === '@DEFAULT?') {
-      data.avatarCache = true
-      data.avatarData = 'assets/images/1.png'
+    if (data.avatar == null || data.avatar === '@DEFAULT?') {
+      data.avatar = 'assets/images/1.png'
     }
     this.userListData.set(data.userID, data)
   },
   addOrRefreshMessage: function (data) {
     this.userListData.add(data.fromID)
-  },
-  // 获取头像
-  getAvatar: async function (userID, jqImg) {
-    var user = this.userListData.get(userID)
-    if (user.avatarCache) {
-      if (jqImg) {
-        jqImg.attr('src', user.avatarData)
-      }
-      return user.avatarData
-    }
-    var data = await $.ajax({
-      type: 'POST',
-      url: api + '/get/resource/Avatar/' + userID,
-      dataType: 'json',
-      async: false,
-      xhrFields: {
-        withCredentials: true
-      }
-    })
-    console.log(data)
-    if (data.code === 0) {
-      user.avatarCache = true
-      // user.avatarData = window.URL.createObjectURL(data)
-      user.avatarData = data.data
-      if (jqImg) {
-        jqImg.attr('src', user.avatarData)
-      }
-    }
-    return user.avatarData
   },
   newFriendDom: function (user) {
     const DOM = (
@@ -236,7 +205,7 @@ const userMethod = {
         $('<div/>').attr({ class: 'layui-col-xs2' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12' }).html(
-              $('<img/>').attr({ class: 'box-my-pic', src: 'assets/images/1.png' }))))).append(
+              $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
         $('<div/>').attr({ class: 'layui-col-xs10' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
@@ -244,7 +213,6 @@ const userMethod = {
               $('<i>').attr({ class: 'layui-bg-red layui-badge-dot UserMsgdot' }))).append(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).text(user.signature))))
     )
-    userMethod.getAvatar(user.userID, DOM.find('.box-my-pic'))
     return DOM
   },
 
@@ -358,6 +326,11 @@ const userMethod = {
 }
 
 $(() => {
+  $.ajaxSetup({
+    xhrFields: {
+      withCredentials: true
+    }
+  })
   document.oncontextmenu = () => {
     parent.closeMenu()
     return false
@@ -441,8 +414,12 @@ $(() => {
   })
   parent.layui.form.verify({
     nickname: function (value, item) { // value：表单的值、item：表单的DOM对象
+      value = value.trim()
       if (value.length > 10) {
         return '昵称不能超过10个字符'
+      }
+      if (value.length === 0) {
+        return '昵称不能为空'
       }
     },
     signature: function (value, item) {
@@ -476,6 +453,7 @@ $(() => {
           { label: '签名', id: 'tv', name: 'signature', type: 'richInput', value: parent.selfData.signature, lay_verify: 'signature' }
         ],
         buttonBlock: [
+          { type: 'button', id: 'updateAvatar', field: '更新头像' },
           { type: 'submit', id: 'submit', field: '提交', lay_submit: '', lay_filter: 'updateInfoBox' },
           { type: 'button', class: 'layui-btn-normal', id: 'cancel', field: '取消' }
         ]
@@ -485,9 +463,25 @@ $(() => {
       resize: true,
       // btn: ['提交', '取消'],
       success: function (layero, index) {
+        parent.upload.render({
+          elem: '#updateAvatar',
+          url: api.updateAvatar,
+          size: 2048, // 限制文件大小，单位 KB
+          accept: 'images',
+          acceptMime: 'image/*',
+          exts: 'bmp|gif|jpg|png',
+          done: function (data) {
+            console.log(data)
+            if (data.code !== 0) {
+              parent.layer.msg('错误:' + data.msg)
+            } else {
+              parent.$('#self-avatar').attr('src', data.data)
+            }
+          }
+        })
         console.log(index)
-        top.layui.form.render()
-        top.layui.form.on('select', function (data) {
+        parent.layui.form.render()
+        parent.layui.form.on('select', function (data) {
           console.log(data)
         })
         console.log(parent.layui.form.val('updateForm'))
@@ -543,6 +537,8 @@ $(() => {
         })
         parent.layui.form.on('submit(updateInfoBox)', function (data) {
           console.log(data.field)
+          data.field.nickname = data.field.nickname.trim()
+          data.field.signature = data.field.signature.trim()
           waitMethod.start('更新中')
           $.ajax({
             type: 'POST',

@@ -1,6 +1,12 @@
 var $ = layui.$
+$.ajaxSetup({
+  xhrFields: {
+    withCredentials: true
+  }
+})
 var layer = layui.layer
 var mouseRightMenu = layui.mouseRightMenu
+var upload = layui.upload
 // 主窗口
 var chatBoxIndex
 // 右键菜单
@@ -59,20 +65,6 @@ var ChatBoxMap = {
 
 }
 
-function getSelfAvatar (id, jqImg) {
-  $.ajax({
-    type: 'POST',
-    url: api.getAvatarResource + id,
-    dataType: 'json',
-    xhrFields: {
-      withCredentials: true
-    },
-    success: function (data) {
-      jqImg.attr('src', data.data)
-    },
-    error: ajaxError
-  })
-}
 start()
 function start () {
   const waitIndex = layer.msg('连接中', {
@@ -101,12 +93,15 @@ function start () {
       }
       layer.close(waitIndex)
       selfData = data.data
+      if (selfData.avatar == null || selfData.avatar === '@DEFAULT') {
+        selfData.avatar = 'assets/images/1.png'
+      }
       chatBoxIndex = layer.open({
         type: 2,
         closeBtn: 1,
         offset: 'auto',
         title: [
-          '<img id="self-avatar" src="assets/images/1.png"><div class="box-title-container"><div class="box-title-name"><span id="self-nickname">' + selfData.nickname + '</span><span id="self-status" class="layui-bg-green layui-badge-dot"></span></div></div>',
+          '<img id="self-avatar" src="' + selfData.avatar + '" /><div class="box-title-container"><div class="box-title-name"><span id="self-nickname">' + selfData.nickname + '</span><span id="self-status" class="layui-bg-green layui-badge-dot"></span></div></div>',
           'height:40px;line-height:80px;border:none;'
         ],
         id: 'box',
@@ -133,9 +128,6 @@ function start () {
         //   console.log(layero)
         // }
       })
-      if (selfData.avatar !== null && selfData.avatar !== '@Default?') {
-        getSelfAvatar(selfData.userID, $('#self-avatar'))
-      }
     },
     error: function () {
       layer.close(waitIndex)
@@ -163,10 +155,13 @@ function getBoxMouseXY (x, y) {
 
 // 详细的聊天界面
 function createWindow (user) {
+  if (user.avatar == null || user.avatar === '@DEFAULT') {
+    user.avatar = 'assets/images/1.png'
+  }
   layer.open({
     type: 2,
     title: [
-      '<img src="assets/images/1.png"><div class="title-container"><div class="title-name">' + user.nickname + '</div><span class="title-msg">' + user.signature + '</span></div>',
+      '<img src="' + user.avatar + '"><div class="title-container"><div class="title-name">' + user.nickname + '</div><span class="title-msg">' + user.signature + '</span></div>',
       'height:80px;line-height:80px;'
     ],
     id: 'u' + user.userID,

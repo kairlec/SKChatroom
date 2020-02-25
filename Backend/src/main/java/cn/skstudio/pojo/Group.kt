@@ -16,14 +16,18 @@ data class Group(
         var groupName: String?
 ) {
 
+    fun ownerVerify(userID: Long): Boolean {
+        return userID == this.userID
+    }
+
     companion object {
         private val snowFlake = SnowFlake(StaticConfig.snowFlakeWorkerId, StaticConfig.snowFlakeDataCenterId)
         fun getNewGroupID(): Long {
             return snowFlake.nextId()
         }
 
-        fun newDefaultGroup(userID:Long):Group{
-            return Group(-userID,-1,userID,"默认分组")
+        fun newDefaultGroup(userID: Long): Group {
+            return Group(-userID, -1, userID, "默认分组")
         }
 
     }

@@ -2,22 +2,19 @@ package cn.skstudio.`interface`
 
 interface ResponseDataInterface {
     /**
-     * 获取错误码
-     *
+     * 错误码
      * @return
      */
     val code: Int
 
     /**
-     * 获取错误码
-     *
+     * 错误信息
      * @return
      */
-    val message: String
+    val msg: String
 
     /**
-     * 获取数据
-     *
+     * 附带数据
      * @return
      */
     val data: Any?
