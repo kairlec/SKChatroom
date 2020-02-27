@@ -1,5 +1,6 @@
 package cn.skstudio.controller.user
 
+import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.controller.websocket.WebSocketHandler
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
@@ -28,6 +29,7 @@ class UserController {
     //region 登录相关方法
 
     //登录
+    @RequestLimit(60,10)
     @RequestMapping(value = ["/login"])
     fun login(request: HttpServletRequest): String {
         val session = request.session

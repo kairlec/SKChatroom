@@ -331,10 +331,14 @@ $(() => {
       withCredentials: true
     }
   })
-  document.oncontextmenu = () => {
+
+  // 屏蔽默认的右键菜单,并设为捕获时事件
+  document.addEventListener('contextmenu', function (event) {
+    console.log('右键文档')
     parent.closeMenu()
-    return false
-  }
+    console.log(event)
+    event.returnValue = false
+  }, true)
 
   $('#group').on('click', '.layui-colla-title', function () {
     var theContent = $(this).next('.group')
@@ -352,6 +356,7 @@ $(() => {
   })
 
   $('#group').on('contextmenu', '.layui-colla-item', function (event) {
+    console.log('右键组')
     parent.menuIndex = parent.mouseRightMenu.open(getGroupData($(this).children('.group').attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
       switch (data.type) {
         case 1:// 展开/收缩
@@ -386,6 +391,7 @@ $(() => {
   })
 
   $('#group').on('contextmenu', '.user', function (event) {
+    console.log('右键用户')
     parent.menuIndex = parent.mouseRightMenu.open(getUserData($(this).attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
       switch (data.type) {
         case 1:// 打开会话
@@ -400,6 +406,20 @@ $(() => {
     return false
   })
 
+  $('.boxBlank').on('contextmenu', function (event) {
+    console.log('右键空白')
+    parent.menuIndex = parent.mouseRightMenu.open(getBlankData(), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
+      switch (data.type) {
+        case 1:
+          break
+        case 2:
+          break
+        // case 3:
+        //   break
+      }
+    })
+  })
+
   $('#toolbar').on('click', '.layui-icon-search', function (event) {
     parent.layer.prompt({
       formType: 0,
@@ -412,6 +432,7 @@ $(() => {
       parent.layer.close(index)
     })
   })
+
   parent.layui.form.verify({
     nickname: function (value, item) { // value：表单的值、item：表单的DOM对象
       value = value.trim()
@@ -455,7 +476,7 @@ $(() => {
         buttonBlock: [
           { type: 'button', id: 'updateAvatar', field: '更新头像' },
           { type: 'submit', id: 'submit', field: '提交', lay_submit: '', lay_filter: 'updateInfoBox' },
-          { type: 'button', class: 'layui-btn-normal', id: 'cancel', field: '取消' }
+          { type: 'button', id: 'cancel', field: '取消' }
         ]
       }),
       area: '500px',
@@ -539,6 +560,7 @@ $(() => {
           console.log(data.field)
           data.field.nickname = data.field.nickname.trim()
           data.field.signature = data.field.signature.trim()
+          delete data.field.file
           waitMethod.start('更新中')
           $.ajax({
             type: 'POST',
@@ -787,6 +809,70 @@ function createValueInputDOM (itemSet) {
         }
       })(item.type)))
   })
+
+  /**
+ * createValueInputDOM({
+        id: 'updateForm',
+        lay_filter: 'updateForm',
+        inputBlock: [
+          { label: '昵称', name: 'nickname', type: 'input', placeholder: '请输入昵称', value: parent.selfData.nickname, lay_verify: 'required|nickname' },
+          {
+            label: '性别',
+            name: 'sex',
+            type: 'select',
+            selectList: [{ value: '男', text: '男' }, { value: '女', text: '女' }, { value: '未知', text: '未知' }],
+            value: parent.selfData.sex
+          },
+          { label: 'email', name: 'email', type: 'input', placeholder: '请输入邮箱', value: parent.selfData.email, lay_verify: 'required|email' },
+          { label: '电话', name: 'phone', type: 'input', placeholder: '请输入号码', value: parent.selfData.phone, lay_verify: 'phone|number' },
+          { label: '签名', id: 'tv', name: 'signature', type: 'richInput', value: parent.selfData.signature, lay_verify: 'signature' }
+        ],
+        buttonBlock: [
+          { type: 'button', id: 'updateAvatar', field: '更新头像' },
+          { type: 'submit', id: 'submit', field: '提交', lay_submit: '', lay_filter: 'updateInfoBox' },
+          { type: 'button', id: 'cancel', field: '取消' }
+        ]
+      })
+      } else if (type === 'richInput') {
+        console.log(item.value)
+        return $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<textarea/>').attr({
+            id: item.id || '',
+            name: item.name || '',
+            class: 'layui-textarea',
+            placeholder: item.placeholder || '请输入内容',
+            'lay-verify': item.lay_verify
+          }).text(item.value))
+      }
+
+ */
+  function createUploadFormDOM (selfData) {
+    return $('<form/>').attr({ class: 'layui-form', id: itemSet.id, 'lay-filter': itemSet.lay_filter, action: '##', onsubmit: 'return false', method: 'post' }).append(
+      $('<div/>').attr({ class: 'layui-form-item' }).html(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('昵称')).append(
+        $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<input/>').attr({ name: 'nickname', class: 'layui-input', type: 'text', placeholder: '请输入昵称', value: selfData.nickname, 'lay-verify': 'required|nickname' })))).append(
+      $('<div/>').attr({ class: 'layui-form-item' }).html(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('性别')).append(
+        $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<select/>').attr({ name: 'sex' }).append(
+            $('<option/>').attr(selfData.sex === '男' ? { value: '男', select: '' } : { value: '男' }).text('男')).append(
+            $('<option/>').attr(selfData.sex === '女' ? { value: '女', select: '' } : { value: '男' }).text('女')).append(
+            $('<option/>').attr(selfData.sex === '未知' ? { value: '未知', select: '' } : { value: '男' }).text('未知'))))).append(
+      $('<div/>').attr({ class: 'layui-form-item' }).html(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('email')).append(
+        $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<input/>').attr({ name: 'email', class: 'layui-input', type: 'text', placeholder: '请输入邮箱', value: selfData.email, 'lay-verify': 'required|email' })))).append(
+      $('<div/>').attr({ class: 'layui-form-item' }).html(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('电话')).append(
+        $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<input/>').attr({ name: 'phone', class: 'layui-input', type: 'text', placeholder: '请输入电话', value: selfData.phone, 'lay-verify': 'phone|number' })))).append(
+      $('<div/>').attr({ class: 'layui-form-item layui-form-text' }).html(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('签名')).append(
+        $('<div/>').attr({ class: 'layui-input-block' }).html(
+          $('<textarea/>').attr({ name: 'signature', class: 'layui-textarea', placeholder: '请输入内容', 'lay-verify': 'signature' }).text(selfData.signature)))
+    )
+  }
 
   /**
    * @description 创建按钮组

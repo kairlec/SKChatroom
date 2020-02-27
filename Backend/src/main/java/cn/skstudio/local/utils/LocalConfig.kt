@@ -23,6 +23,9 @@ class LocalConfig {
     @Autowired
     private lateinit var actionMessageServiceTemp: ActionMessageServiceImpl
 
+    @Autowired
+    private lateinit var redisServiceTemp: RedisServiceImpl
+
     @PostConstruct
     fun init() {
         userService = userServiceTemp
@@ -45,9 +48,10 @@ class LocalConfig {
         if (mailSenderService.initialize() == null) {
             logger.warn("Init database table [MailSender] failed")
         }
-        if(userService.initializeAdmin()==null){
+        if (userService.initializeAdmin() == null) {
             logger.warn("Init user admin failed")
         }
+        redisService = redisServiceTemp
         logger.info("Init finished")
     }
 
@@ -62,6 +66,8 @@ class LocalConfig {
         lateinit var friendService: FriendServiceImpl
             private set
         lateinit var actionMessageService: ActionMessageServiceImpl
+            private set
+        lateinit var redisService: RedisServiceImpl
             private set
     }
 }

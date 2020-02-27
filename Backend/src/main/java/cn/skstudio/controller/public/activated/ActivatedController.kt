@@ -5,6 +5,7 @@ package cn.skstudio.controller.public.activated
  * @version: 2.2
  * @description: 注册和激活接口
  */
+import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
@@ -36,6 +37,7 @@ class ActivatedController {
      * @description: 激活接口
      * @return: 激活状态
      */
+    @RequestLimit(60,3)
     @RequestMapping(value = ["/activate"])
     fun activated(request: HttpServletRequest, response: HttpServletResponse): String {
         val activateCode = request.getParameter("activateCode")
@@ -85,6 +87,7 @@ class ActivatedController {
         return ResponseDataUtils.OK()
     }
 
+    @RequestLimit(60,3)
     @RequestMapping(value = [""])
     fun register(request: HttpServletRequest): String {
         val username = request.getParameter("username")

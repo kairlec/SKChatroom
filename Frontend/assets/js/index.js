@@ -237,3 +237,7 @@ var actionMessagePool = {
     return array
   }
 }
+
+window.onbeforeunload = function () {
+  console.trace(new Error().stack)
+}

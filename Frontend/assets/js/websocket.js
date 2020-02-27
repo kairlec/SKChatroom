@@ -71,7 +71,6 @@ function longSock (url, fn, fnResponse, intro = '') {
     ws.onmessage = evt => {
       heartCheck.reset().start()
       var json = JSON.parse(evt.data)
-      console.log(json)
       if (json.type === 'HeartBeat') return
       if (json.type === 'Response') {
         fnResponse(json, ws)

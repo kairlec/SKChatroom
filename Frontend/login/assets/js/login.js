@@ -30,7 +30,7 @@ function endWait () {
 function responseWrapper (data, callback) {
   if (data.code !== 0) {
     if (data.code !== 30009) {
-      layer.msg('错误:' + data.message)
+      layer.msg('错误:' + data.msg)
     }
   } else {
     callback(data.data)
@@ -97,7 +97,7 @@ function login (formData, publicKey) {
           getCaptcha()
           showCaptcha()
         } else {
-          layer.msg('登录失败:' + data.message)
+          layer.msg('登录失败:' + data.msg)
         }
       } else {
         window.location.href = '..'
@@ -120,7 +120,7 @@ function reg (formData, publicKey) {
     success: function (data) {
       endWait()
       if (data.code !== 0) {
-        layer.msg('错误:' + data.message)
+        layer.msg('错误:' + data.msg)
       } else {
         if (data.data === 'VERIFICATION_REQUIRED') {
           layer.msg('激活链接已发送到邮箱,请查看')

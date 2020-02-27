@@ -34,10 +34,16 @@ open class InterceptorRegister : WebMvcConfigurer {
         return GroupInterceptor()
     }
 
+    @Bean
+    open fun requestInterceptorMaker():RequestLimitInterceptor{
+        return RequestLimitInterceptor()
+    }
+
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(adminInterceptorMaker()).addPathPatterns(AdminInterceptor.pathPatterns)
         registry.addInterceptor(userInterceptorMaker()).addPathPatterns(UserInterceptor.pathPatterns)
         registry.addInterceptor(groupInterceptorMaker()).addPathPatterns(GroupInterceptor.pathPatterns)
+        registry.addInterceptor(requestInterceptorMaker()).addPathPatterns(RequestLimitInterceptor.pathPatterns)
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {
