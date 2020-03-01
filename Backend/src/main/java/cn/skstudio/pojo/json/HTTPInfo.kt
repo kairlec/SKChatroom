@@ -13,61 +13,50 @@ import javax.servlet.http.HttpServletResponse
 
 class HTTPInfo(request: HttpServletRequest, response: HttpServletResponse) {
     @JSONField(name = "Scheme", ordinal = 7)
-    val Scheme: String?
-    @JSONField(name = "Proto", ordinal = 8)
-    val Proto: String?
+    val scheme: String? = request.scheme
+    @JSONField(name = "Protocol", ordinal = 8)
+    val proto: String? = request.protocol
     @JSONField(name = "ResponseStatus", ordinal = 12)
-    val ResponseStatus: Int?
+    val responseStatus = response.status
     @JSONField(name = "URL", ordinal = 0)
-    val URL: String?
+    val url: String? = URLDecoder.decode(request.requestURL.toString(), StandardCharsets.UTF_8)
     @JSONField(name = "URI", ordinal = 1)
-    val URI: String?
+    val uri: String? = URLDecoder.decode(request.requestURI, StandardCharsets.UTF_8)
     @JSONField(name = "QueryString", ordinal = 2)
-    val QueryString: String?
+    val queryString: String? = request.queryString
     @JSONField(name = "RemoteIP", ordinal = 3)
-    val RemoteIP: String?
+    val remoteIP: String? = Network.getIpAddress(request)
     @JSONField(name = "RemoteUser", ordinal = 4)
-    val RemoteUser: String?
+    val remoteUser: String? = request.remoteUser
     @JSONField(name = "Method", ordinal = 5)
-    val Method: String?
+    val method: String? = request.method
     @JSONField(name = "WebName", ordinal = 6)
-    val WebName: String?
+    val webName: String? = request.contextPath
     @JSONField(name = "Headers", ordinal = 9)
-    val Headers: MutableMap<String, String?>?
+    val headers: MutableMap<String, String?>?
     @JSONField(name = "Parameters", ordinal = 11)
-    val Parameters: MutableMap<String, String?>?
+    val parameters: MutableMap<String, String?>?
     @JSONField(name = "Cookies", ordinal = 10)
-    val Cookies: Array<Cookie>?
+    val cookies: Array<Cookie>? = request.cookies
 
     override fun toString(): String {
         return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue)
     }
 
     init {
-        URL = URLDecoder.decode(request.requestURL.toString(), StandardCharsets.UTF_8)
-        URI = URLDecoder.decode(request.requestURI, StandardCharsets.UTF_8)
-        QueryString = request.queryString
-        RemoteIP = Network.getIpAddress(request)
-        Method = request.method
-        WebName = request.contextPath
-        RemoteUser = request.remoteUser
-        Headers = HashMap()
+        headers = HashMap()
         val headerNames = request.headerNames
         while (headerNames.hasMoreElements()) {
             val name = headerNames.nextElement()
             val value = request.getHeader(name)
-            Headers[name] = value
+            headers[name] = value
         }
-        Parameters = HashMap()
+        parameters = HashMap()
         val parameterNames = request.parameterNames
         while (parameterNames.hasMoreElements()) {
             val name = parameterNames.nextElement()
             val value = request.getParameter(name)
-            Parameters[name] = value
+            parameters[name] = value
         }
-        ResponseStatus = response.status
-        Proto = request.protocol
-        Scheme = request.scheme
-        Cookies = request.cookies
     }
 }
