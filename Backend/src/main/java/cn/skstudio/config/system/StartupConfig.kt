@@ -8,6 +8,7 @@ package cn.skstudio.config.system
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import kotlin.properties.Delegates
 
 @Component
 class StartupConfig {
@@ -33,11 +34,17 @@ class StartupConfig {
         Companion.allowedHeaders = allowedHeaders
     }
 
+    @Value("\${redis.enable:#{false}}")
+    fun setRedisEnabled(enabled: Boolean) {
+        redisEnabled = enabled
+    }
+
     companion object {
         lateinit var privateKey: String
         lateinit var publicKey: String
         lateinit var allowedOrigins: Array<String?>
         lateinit var allowedHeaders: Array<String?>
+        var redisEnabled by Delegates.notNull<Boolean>()
     }
 
 }

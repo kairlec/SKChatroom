@@ -29,7 +29,7 @@ class UserController {
     //region 登录相关方法
 
     //登录
-    @RequestLimit(60,10)
+    @RequestLimit(60, 10)
     @RequestMapping(value = ["/login"])
     fun login(request: HttpServletRequest): String {
         val session = request.session
@@ -400,18 +400,26 @@ class UserController {
         val signature = request.getParameter("signature")
         val nickname = request.getParameter("nickname")
         val email = request.getParameter("email")
+        val privateEmail = request.getParameter("private-email")?.toBoolean()
         val phone = request.getParameter("phone")
+        val privatePhone = request.getParameter("private-phone")?.toBoolean()
         val sex = request.getParameter("sex")
+        val privateSex = request.getParameter("private-sex")?.toBoolean()
         val user: User = request.session.getAttribute("user") as User
         val updateUser = user.readyToUpdate()
         var error: ServiceErrorEnum
         var edited = false
+
         if (email != null && email.isNotBlank()) {
             edited = true
             error = updateUser.updateEmail(email)
             if (!error.ok()) {
                 return ResponseDataUtils.Error(error)
             }
+        }
+        if (privateEmail != null) {
+            edited = true
+            updateUser.privateEmail = privateEmail
         }
         if (nickname != null && nickname.isNotBlank()) {
             edited = true
@@ -427,12 +435,20 @@ class UserController {
                 return ResponseDataUtils.Error(error)
             }
         }
+        if (privatePhone != null) {
+            edited = true
+            updateUser.privatePhone = privatePhone
+        }
         if (sex != null && sex.isNotBlank()) {
             edited = true
             error = updateUser.updateSex(sex)
             if (!error.ok()) {
                 return ResponseDataUtils.Error(error)
             }
+        }
+        if (privateSex != null) {
+            edited = true
+            updateUser.privateSex = privateSex
         }
         if (signature != null) {
             edited = true
@@ -446,11 +462,14 @@ class UserController {
         }
         LocalConfig.userService.updateUser(updateUser)
                 ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
-        user.signature = signature
-        user.nickname = nickname
-        user.email = email
-        user.sex = sex
-        user.phone = phone
+        user.signature = signature ?: user.signature
+        user.nickname = nickname ?: user.nickname
+        user.email = email ?: user.email
+        user.sex = sex ?: user.sex
+        user.phone = phone ?: user.phone
+        user.privateEmail = privateEmail ?: user.privateEmail
+        user.privateSex = privateSex ?: user.privateSex
+        user.privatePhone = privatePhone ?: user.privatePhone
         return ResponseDataUtils.successData(user)
     }
 

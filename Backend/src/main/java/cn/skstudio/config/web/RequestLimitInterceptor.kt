@@ -1,6 +1,7 @@
 package cn.skstudio.config.web
 
 import cn.skstudio.annotation.RequestLimit
+import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -30,6 +31,9 @@ class RequestLimitInterceptor : HandlerInterceptor {
     }
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+        if (!StartupConfig.redisEnabled) {
+            return true
+        }
         if (handler is HandlerMethod) {
             val accessLimit = handler.getMethodAnnotation(RequestLimit::class.java) ?: return true
             val seconds = accessLimit.seconds

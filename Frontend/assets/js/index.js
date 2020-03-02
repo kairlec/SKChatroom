@@ -214,6 +214,9 @@ function ajaxError (jqXHR, textStatus, errorThrown) {
 
 function updateSelfData (data) {
   selfData = data
+  if (selfData.signature === null) {
+    selfData.signature = ''
+  }
   $('#self-nickname').text(data.nickname)
 }
 

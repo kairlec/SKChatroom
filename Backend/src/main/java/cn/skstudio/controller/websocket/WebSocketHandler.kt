@@ -47,7 +47,6 @@ class WebSocketHandler : TextWebSocketHandler() {
         val msg = message.payload
         try {
             val result = parseReceiveMessage(msg, session)
-            logger.debug(result)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -86,7 +85,6 @@ class WebSocketHandler : TextWebSocketHandler() {
             val webSocketMessageObject = JSONObject()
             webSocketMessageObject["type"] = type
             webSocketMessageObject["data"] = data
-            logger.debug("""a success"$type" message""")
             return TextMessage(JSON.toJSONString(webSocketMessageObject))
         }
 
@@ -108,7 +106,6 @@ class WebSocketHandler : TextWebSocketHandler() {
         }
 
         private fun parseReceiveMessage(textMessage: String, senderSession: WebSocketSession):String {
-            logger.info("get a new message${textMessage}")
             val rawJson = JSON.parseObject(textMessage)
             when (rawJson["type"]) {
                 "HeartBeat" -> {

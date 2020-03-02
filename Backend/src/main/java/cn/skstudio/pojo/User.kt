@@ -123,6 +123,9 @@ data class User(
     fun readyToUpdate(): User {
         val newUser = User()
         newUser.userID = this.userID
+        newUser.privateSex = null
+        newUser.privatePhone = null
+        newUser.privateEmail = null
         return newUser
     }
 
