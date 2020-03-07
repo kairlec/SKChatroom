@@ -1,5 +1,5 @@
 const $ = layui.$
-
+// 中性图标 <i class="iconfont layui-extend-zhongxing my_iconfont"></i>
 const waitMethod = {
   id: 0,
   start: function (msg) {
@@ -215,6 +215,22 @@ const userMethod = {
     )
     return DOM
   },
+  newAddFriendDom: function (user) {
+    // TODO:添加好友的块
+    const DOM = (
+      $('<div/>').attr({ class: 'layui-row box-my-list user', id: 'a' + user.userID }).html(
+        $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).html(
+            $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+              $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
+        $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).html(
+            $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
+              $('<span>').attr({ class: 'userNickname' }).text(user.nickname))).append(
+            $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).text(user.signature))))
+    )
+    return DOM
+  },
 
   searchUser: function (searchData, fnSuccess) {
     $.ajax({
@@ -334,9 +350,7 @@ $(() => {
 
   // 屏蔽默认的右键菜单,并设为捕获时事件
   document.addEventListener('contextmenu', function (event) {
-    console.log('右键文档')
     parent.closeMenu()
-    console.log(event)
     event.returnValue = false
   }, true)
 
@@ -357,6 +371,7 @@ $(() => {
 
   $('#group').on('contextmenu', '.layui-colla-item', function (event) {
     parent.menuIndex = parent.mouseRightMenu.open(getGroupData($(this).children('.group').attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
+      // TODO:分组右击
       switch (data.type) {
         case 1:// 展开/收缩
           uiMethod.GroupPand.toggleExpanded(data.data)
@@ -391,6 +406,7 @@ $(() => {
 
   $('#group').on('contextmenu', '.user', function (event) {
     parent.menuIndex = parent.mouseRightMenu.open(getUserData($(this).attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
+      // TODO:用户右击
       switch (data.type) {
         case 1:// 打开会话
           openWindow(data.data)
@@ -406,6 +422,7 @@ $(() => {
 
   $('.boxBlank').on('contextmenu', function (event) {
     parent.menuIndex = parent.mouseRightMenu.open(getBlankData(), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
+      // TODO: 空白块右击
       switch (data.type) {
         case 1:
           break
@@ -421,9 +438,28 @@ $(() => {
     parent.layer.prompt({
       formType: 0,
       title: '请输入查找内容',
-      area: ['800px', '350px'] // 自定义文本域宽高
+      area: ['800px', '600px'] // 自定义文本域宽高
     }, function (value, index, elem) {
       userMethod.searchUser(value, function (data) {
+        // TODO: 好友搜索
+        parent.layer.open({
+          type: 1,
+          title: '添加好友',
+          content: '',
+          id: 'searchFriendPanel',
+          area: ['500px', '300px'],
+          success: function (layero, index) {
+            console.log($(layero))
+            $.each(data, function (index, item) {
+              if (item.avatar == null || item.avatar === '@DEFAULT?') {
+                item.avatar = 'assets/images/1.png'
+              }
+              var panel = $(layero).children('#searchFriendPanel')
+              console.log(panel)
+              panel.append(userMethod.newAddFriendDom(item))
+            })
+          }
+        })
         console.log(data)
       })
       parent.layer.close(index)
@@ -454,33 +490,10 @@ $(() => {
       type: 1,
       id: 'updateBox',
       title: '更新信息',
-      // content: createValueInputDOM({
-      //   id: 'updateForm',
-      //   lay_filter: 'updateForm',
-      //   inputBlock: [
-      //     { label: '昵称', name: 'nickname', type: 'input', placeholder: '请输入昵称', value: parent.selfData.nickname, lay_verify: 'required|nickname' },
-      //     {
-      //       label: '性别',
-      //       name: 'sex',
-      //       type: 'select',
-      //       selectList: [{ value: '男', text: '男' }, { value: '女', text: '女' }, { value: '未知', text: '未知' }],
-      //       value: parent.selfData.sex
-      //     },
-      //     { label: 'email', name: 'email', type: 'input', placeholder: '请输入邮箱', value: parent.selfData.email, lay_verify: 'required|email' },
-      //     { label: '电话', name: 'phone', type: 'input', placeholder: '请输入号码', value: parent.selfData.phone, lay_verify: 'phone|number' },
-      //     { label: '签名', id: 'tv', name: 'signature', type: 'richInput', value: parent.selfData.signature, lay_verify: 'signature' }
-      //   ],
-      //   buttonBlock: [
-      //     { type: 'button', id: 'updateAvatar', field: '更新头像' },
-      //     { type: 'submit', id: 'submit', field: '提交', lay_submit: '', lay_filter: 'updateInfoBox' },
-      //     { type: 'button', id: 'cancel', field: '取消' }
-      //   ]
-      // }),
       content: createUploadFormDOM(parent.selfData),
       area: '500px',
       shadeClose: false,
       resize: true,
-      // btn: ['提交', '取消'],
       success: function (layero, index) {
         parent.upload.render({
           elem: '#updateAvatar',
@@ -498,64 +511,13 @@ $(() => {
             }
           }
         })
-        console.log(index)
         parent.layui.form.render()
-        parent.layui.form.on('select', function (data) {
-          console.log(data)
-        })
-        console.log(parent.layui.form.val('updateForm'))
-        // parent.layui.form.val('updateForm', {
-        //   nickname: parent.selfData.nickname,
-        //   sex: parent.selfData.sex,
-        //   email: parent.selfData.email,
-        //   phone: parent.selfData.phone,
-        //   signature: parent.selfData.signature
-        // })
-        // console.log(parent.layui.form.val('updateForm'))
-        // parent.$('.layui-form').on('click', '#submit', function () {
-        //   var layero = parent.$('#updateForm')
-        //   const data = {}
-        //   layero.find('input').each(function () {
-        //     if (typeof ($(this).attr('name')) !== 'undefined') {
-        //       data[$(this).attr('name')] = $(this).val()
-        //     }
-        //   })
-        //   layero.find('select').each(function () {
-        //     if (typeof ($(this).attr('name')) !== 'undefined') {
-        //       data[$(this).attr('name')] = $(this).val()
-        //     }
-        //   })
-        //   layero.find('textarea').each(function () {
-        //     if (typeof ($(this).attr('name')) !== 'undefined') {
-        //       data[$(this).attr('name')] = $(this).val()
-        //     }
-        //   })
-        //   console.log(data)
-        //   waitMethod.start('更新中')
-        //   $.ajax({
-        //     type: 'POST',
-        //     url: api.update,
-        //     data: data,
-        //     dataType: 'json',
-        //     xhrFields: {
-        //       withCredentials: true
-        //     },
-        //     success: function (data) {
-        //       waitMethod.end()
-        //       warpResponseData(data, (data) => {
-        //         updateSelfData(data)
-        //       })
-        //     },
-        //     error: ajaxError
-        //   })
-        // })
         parent.$('.layui-form').on('click', '#cancel', function () {
           if (confirm('确定要关闭吗,所做的修改都会丢弃')) {
             parent.layer.close(updateFormIndex)
           }
         })
         parent.layui.form.on('submit(updateInfoBox)', function (data) {
-          console.log(data.field)
           data.field.nickname = data.field.nickname.trim()
           data.field.signature = data.field.signature.trim()
           // layui最傻逼的设计就是开关的值不是返回true/false而是'on'/null
@@ -599,45 +561,6 @@ $(() => {
           return false
         })
       },
-      // yes: function (index, layero) {
-      //   const data = {}
-      //   layero.find('input').each(function () {
-      //     if (typeof ($(this).attr('name')) !== 'undefined') {
-      //       data[$(this).attr('name')] = $(this).val()
-      //     }
-      //   })
-      //   layero.find('select').each(function () {
-      //     if (typeof ($(this).attr('name')) !== 'undefined') {
-      //       data[$(this).attr('name')] = $(this).val()
-      //     }
-      //   })
-      //   layero.find('textarea').each(function () {
-      //     if (typeof ($(this).attr('name')) !== 'undefined') {
-      //       data[$(this).attr('name')] = $(this).val()
-      //     }
-      //   })
-      //   console.log(data)
-      //   waitMethod.start('更新中')
-      //   $.ajax({
-      //     type: 'POST',
-      //     url: api.update,
-      //     data: data,
-      //     dataType: 'json',
-      //     xhrFields: {
-      //       withCredentials: true
-      //     },
-      //     success: function (data) {
-      //       waitMethod.end()
-      //       warpResponseData(data, (data) => {
-      //         updateSelfData(data)
-      //       })
-      //     },
-      //     error: ajaxError
-      //   })
-      // },
-      // btn2: function (index, layero) {
-      //   return this.cancel(index, layero)
-      // },
       cancel: function (indexC) {
         if (confirm('确定要关闭吗,所做的修改都会丢弃')) {
           parent.layer.close(indexC)
@@ -775,89 +698,9 @@ function warpResponseData (data, callback) {
 }
 
 /**
- * @description 创建输入组
- * @param {Object} itemSet 包含组元件信息的集
+ * @description 创建上传版UI,作为layer.open内容
+ * @param {Object} selfData 自己的信息
  */
-function createValueInputDOM (itemSet) {
-  var tmp = $('<div/>')
-  var DOM = $('<form/>').attr({ class: 'layui-form', id: itemSet.id, 'lay-filter': itemSet.lay_filter, action: '##', onsubmit: 'return false', method: 'post' })
-  $.each(itemSet.inputBlock, function (index, item) {
-    DOM.append(
-      $('<div/>').attr({ class: item.type === 'richInput' ? 'layui-form-item layui-form-text' : 'layui-form-item' }).html(
-        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text(item.label)).append(((type) => {
-        if (type === 'input') {
-          return $('<div/>').attr({ class: 'layui-input-block' }).html(
-            $('<input/>').attr({
-              id: item.id || '',
-              name: item.name || '',
-              class: 'layui-input',
-              type: item.inputType || 'text',
-              placeholder: item.placeholder || '',
-              autocomplete: item.autocomplete || 'off',
-              value: item.value || '',
-              'lay-verify': item.lay_verify
-            }))
-        } else if (type === 'select') {
-          const inputBlock = $('<div/>').attr({ class: 'layui-input-block' })
-          const selectDOM = $('<select/>').attr({ name: item.name })
-          $.each(item.selectList, function (index, itemOption) {
-            let attr
-            console.log(itemOption.value)
-            console.log(item.value)
-            if (itemOption.value === item.value) {
-              attr = { value: itemOption.value, selected: '' }
-            } else {
-              attr = { value: itemOption.value }
-            }
-            selectDOM.append($('<option/>').attr(attr).text(itemOption.text))
-          })
-          inputBlock.html(selectDOM)
-          return inputBlock
-        } else if (type === 'richInput') {
-          console.log(item.value)
-          return $('<div/>').attr({ class: 'layui-input-block' }).html(
-            $('<textarea/>').attr({
-              id: item.id || '',
-              name: item.name || '',
-              class: 'layui-textarea',
-              placeholder: item.placeholder || '请输入内容',
-              'lay-verify': item.lay_verify
-            }).text(item.value))
-        }
-      })(item.type)))
-  })
-
-  /**
-   * @description 创建按钮组
-   */
-  var buttonGroup = $('<div/>').attr({ class: 'layui-input-block' })
-  $.each(itemSet.buttonBlock, function (index, item) {
-    var classes = item.class || ''
-    if (item.type === 'submit') {
-      buttonGroup.append(
-        $('<button/>').attr({
-          class: 'layui-btn ' + classes,
-          id: item.id,
-          type: item.type,
-          'lay-submit': item.lay_submit,
-          'lay-filter': item.lay_filter
-        }).text(item.field)
-      )
-    } else {
-      buttonGroup.append(
-        $('<button/>').attr({ class: 'layui-btn ' + classes, id: item.id, type: item.type }).text(item.field)
-      )
-    }
-  })
-  if (itemSet.buttonBlock.length > 0) {
-    DOM.append(
-      $('<div/>').attr({ class: 'layui-form-item' }).html(buttonGroup)
-    )
-  }
-  tmp.html(DOM)
-  return tmp.html()
-}
-
 function createUploadFormDOM (selfData) {
   var tmp = $('<div/>')
   tmp.append($('<form/>').attr({ class: 'layui-form', id: selfData.userID, 'lay-filter': 'updateForm', action: '##', onsubmit: 'return false', method: 'post' }).append(
@@ -899,14 +742,6 @@ function createUploadFormDOM (selfData) {
   )
   return tmp.html()
 }
-
-/**
- * buttonBlock: [
-      //     { type: 'button', id: 'updateAvatar', field: '更新头像' },
-      //     { type: 'submit', id: 'submit', field: '提交', lay_submit: '', lay_filter: 'updateInfoBox' },
-      //     { type: 'button', id: 'cancel', field: '取消' }
-      //   ]
- */
 
 function updateSelfData (data) {
   parent.updateSelfData(data)

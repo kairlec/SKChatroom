@@ -1,16 +1,163 @@
 {
   "id": "1555682",
-  "name": "layui-icon-extend",
+  "name": "layuiExtend",
   "font_family": "iconfont",
-  "css_prefix_text": "icon-",
+  "css_prefix_text": "layui-extend-",
   "description": "",
   "glyphs": [
+    {
+      "icon_id": "9096739",
+      "name": "alipay",
+      "font_class": "alipay",
+      "unicode": "e689",
+      "unicode_decimal": 59017
+    },
+    {
+      "icon_id": "13261343",
+      "name": "中性",
+      "font_class": "zhongxing",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "2153985",
+      "name": "女_32",
+      "font_class": "nv",
+      "unicode": "e682",
+      "unicode_decimal": 59010
+    },
+    {
+      "icon_id": "2153986",
+      "name": "男_32",
+      "font_class": "nan",
+      "unicode": "e684",
+      "unicode_decimal": 59012
+    },
     {
       "icon_id": "5643541",
       "name": "邮箱",
       "font_class": "youxiang",
       "unicode": "e610",
       "unicode_decimal": 58896
+    },
+    {
+      "icon_id": "8777600",
+      "name": "page_turning_left",
+      "font_class": "icon-test66",
+      "unicode": "e675",
+      "unicode_decimal": 58997
+    },
+    {
+      "icon_id": "8777601",
+      "name": "page_turning_right",
+      "font_class": "icon-test67",
+      "unicode": "e676",
+      "unicode_decimal": 58998
+    },
+    {
+      "icon_id": "8777602",
+      "name": "show_less",
+      "font_class": "icon-test68",
+      "unicode": "e677",
+      "unicode_decimal": 58999
+    },
+    {
+      "icon_id": "8777603",
+      "name": "show_more",
+      "font_class": "icon-test69",
+      "unicode": "e678",
+      "unicode_decimal": 59000
+    },
+    {
+      "icon_id": "8777646",
+      "name": "social_fb",
+      "font_class": "icon-test70",
+      "unicode": "e679",
+      "unicode_decimal": 59001
+    },
+    {
+      "icon_id": "8777647",
+      "name": "social_linkedin",
+      "font_class": "icon-test71",
+      "unicode": "e67a",
+      "unicode_decimal": 59002
+    },
+    {
+      "icon_id": "8777649",
+      "name": "social_sina",
+      "font_class": "icon-test72",
+      "unicode": "e67b",
+      "unicode_decimal": 59003
+    },
+    {
+      "icon_id": "8777650",
+      "name": "social_google",
+      "font_class": "icon-test73",
+      "unicode": "e67c",
+      "unicode_decimal": 59004
+    },
+    {
+      "icon_id": "8777651",
+      "name": "social_naver",
+      "font_class": "icon-test74",
+      "unicode": "e67d",
+      "unicode_decimal": 59005
+    },
+    {
+      "icon_id": "8777652",
+      "name": "social_stackflow",
+      "font_class": "icon-test75",
+      "unicode": "e67e",
+      "unicode_decimal": 59006
+    },
+    {
+      "icon_id": "8777653",
+      "name": "social_youtube",
+      "font_class": "icon-test76",
+      "unicode": "e67f",
+      "unicode_decimal": 59007
+    },
+    {
+      "icon_id": "8777654",
+      "name": "social_github",
+      "font_class": "icon-test77",
+      "unicode": "e680",
+      "unicode_decimal": 59008
+    },
+    {
+      "icon_id": "8777655",
+      "name": "social_twitter",
+      "font_class": "icon-test78",
+      "unicode": "e681",
+      "unicode_decimal": 59009
+    },
+    {
+      "icon_id": "8777657",
+      "name": "social_wechat",
+      "font_class": "icon-test80",
+      "unicode": "e683",
+      "unicode_decimal": 59011
+    },
+    {
+      "icon_id": "8783413",
+      "name": "balance",
+      "font_class": "icon-test82",
+      "unicode": "e685",
+      "unicode_decimal": 59013
+    },
+    {
+      "icon_id": "8918244",
+      "name": "go-to-link",
+      "font_class": "icon-test83",
+      "unicode": "e686",
+      "unicode_decimal": 59014
+    },
+    {
+      "icon_id": "8918512",
+      "name": "benefits",
+      "font_class": "icon-test84",
+      "unicode": "e687",
+      "unicode_decimal": 59015
     },
     {
       "icon_id": "8776631",
@@ -473,167 +620,6 @@
       "font_class": "icon-test65",
       "unicode": "e674",
       "unicode_decimal": 58996
-    },
-    {
-      "icon_id": "8777600",
-      "name": "page_turning_left",
-      "font_class": "icon-test66",
-      "unicode": "e675",
-      "unicode_decimal": 58997
-    },
-    {
-      "icon_id": "8777601",
-      "name": "page_turning_right",
-      "font_class": "icon-test67",
-      "unicode": "e676",
-      "unicode_decimal": 58998
-    },
-    {
-      "icon_id": "8777602",
-      "name": "show_less",
-      "font_class": "icon-test68",
-      "unicode": "e677",
-      "unicode_decimal": 58999
-    },
-    {
-      "icon_id": "8777603",
-      "name": "show_more",
-      "font_class": "icon-test69",
-      "unicode": "e678",
-      "unicode_decimal": 59000
-    },
-    {
-      "icon_id": "8777646",
-      "name": "social_fb",
-      "font_class": "icon-test70",
-      "unicode": "e679",
-      "unicode_decimal": 59001
-    },
-    {
-      "icon_id": "8777647",
-      "name": "social_linkedin",
-      "font_class": "icon-test71",
-      "unicode": "e67a",
-      "unicode_decimal": 59002
-    },
-    {
-      "icon_id": "8777649",
-      "name": "social_sina",
-      "font_class": "icon-test72",
-      "unicode": "e67b",
-      "unicode_decimal": 59003
-    },
-    {
-      "icon_id": "8777650",
-      "name": "social_google",
-      "font_class": "icon-test73",
-      "unicode": "e67c",
-      "unicode_decimal": 59004
-    },
-    {
-      "icon_id": "8777651",
-      "name": "social_naver",
-      "font_class": "icon-test74",
-      "unicode": "e67d",
-      "unicode_decimal": 59005
-    },
-    {
-      "icon_id": "8777652",
-      "name": "social_stackflow",
-      "font_class": "icon-test75",
-      "unicode": "e67e",
-      "unicode_decimal": 59006
-    },
-    {
-      "icon_id": "8777653",
-      "name": "social_youtube",
-      "font_class": "icon-test76",
-      "unicode": "e67f",
-      "unicode_decimal": 59007
-    },
-    {
-      "icon_id": "8777654",
-      "name": "social_github",
-      "font_class": "icon-test77",
-      "unicode": "e680",
-      "unicode_decimal": 59008
-    },
-    {
-      "icon_id": "8777655",
-      "name": "social_twitter",
-      "font_class": "icon-test78",
-      "unicode": "e681",
-      "unicode_decimal": 59009
-    },
-    {
-      "icon_id": "8777656",
-      "name": "applets",
-      "font_class": "icon-test79",
-      "unicode": "e682",
-      "unicode_decimal": 59010
-    },
-    {
-      "icon_id": "8777657",
-      "name": "social_wechat",
-      "font_class": "icon-test80",
-      "unicode": "e683",
-      "unicode_decimal": 59011
-    },
-    {
-      "icon_id": "8777750",
-      "name": "social_server_fault",
-      "font_class": "icon-test81",
-      "unicode": "e684",
-      "unicode_decimal": 59012
-    },
-    {
-      "icon_id": "8783413",
-      "name": "balance",
-      "font_class": "icon-test82",
-      "unicode": "e685",
-      "unicode_decimal": 59013
-    },
-    {
-      "icon_id": "8918244",
-      "name": "go-to-link",
-      "font_class": "icon-test83",
-      "unicode": "e686",
-      "unicode_decimal": 59014
-    },
-    {
-      "icon_id": "8918512",
-      "name": "benefits",
-      "font_class": "icon-test84",
-      "unicode": "e687",
-      "unicode_decimal": 59015
-    },
-    {
-      "icon_id": "9096738",
-      "name": "dingtalk",
-      "font_class": "dingtalk",
-      "unicode": "e688",
-      "unicode_decimal": 59016
-    },
-    {
-      "icon_id": "9096739",
-      "name": "alipay",
-      "font_class": "alipay",
-      "unicode": "e689",
-      "unicode_decimal": 59017
-    },
-    {
-      "icon_id": "9096740",
-      "name": "taobao",
-      "font_class": "taobao",
-      "unicode": "e68a",
-      "unicode_decimal": 59018
-    },
-    {
-      "icon_id": "9096741",
-      "name": "1688",
-      "font_class": "icon-test85",
-      "unicode": "e68b",
-      "unicode_decimal": 59019
     }
   ]
 }

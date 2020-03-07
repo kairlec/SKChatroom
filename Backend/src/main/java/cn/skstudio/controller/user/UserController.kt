@@ -10,6 +10,7 @@ import cn.skstudio.local.utils.UserChecker
 import cn.skstudio.pojo.*
 import cn.skstudio.utils.Network
 import cn.skstudio.utils.PasswordCoder
+import cn.skstudio.utils.StringExtend.similar
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
 import org.apache.commons.io.FilenameUtils
@@ -27,6 +28,7 @@ import javax.servlet.http.HttpSession
 class UserController {
 
     //region 登录相关方法
+
 
     //登录
     @RequestLimit(60, 10)
@@ -199,20 +201,31 @@ class UserController {
         val data = request.getParameter("data")
                 ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
         val dataList = ArrayList<GuestUser>()
-        try {
-            val dataID = data.toLong()
+        val dataID = data.toLongOrNull()
+        if (dataID != null) {
             val user = LocalConfig.userService.getUserByID(dataID)
             if (user != null && user.userID != self.userID) {
-                dataList.add(GuestUser.getInstance(user))
+                val guest = GuestUser.getInstance(user)
+                if (guest.avatar != "@DEFAULT?") {
+                    val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, guest.avatar).toBase64()
+                    guest.avatar = base64Data
+                }
+                dataList.add(guest)
             }
-        } catch (e: NumberFormatException) {
-            logger.info("$data is not valid user id")
         }
         val list = LocalConfig.userService.searchUserByNickname(data)
         if (list != null) {
             for (user in list) {
                 if (user.userID != self.userID) {
-                    dataList.add(GuestUser.getInstance(user))
+                    if (data.similar(user.nickname) < 0.5) {
+                        continue
+                    }
+                    val guest = GuestUser.getInstance(user)
+                    if (guest.avatar != "@DEFAULT?") {
+                        val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, guest.avatar).toBase64()
+                        guest.avatar = base64Data
+                    }
+                    dataList.add(guest)
                 }
             }
         }

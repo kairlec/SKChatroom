@@ -33,7 +33,7 @@ data class User(
         var admin: Boolean?
 ) {
 
-    constructor() : this(-1, "@", "@", null, null, null, null, null, null, null, null, true, false, false, false)
+    constructor() : this(-1, "@", "@", null, null, null, null, null, null, null, null, true, true, true, false)
 
     fun equalPassword(password: String): Boolean {
         return this.password == DigestUtils.md5DigestAsHex((password + userID).toByteArray())
