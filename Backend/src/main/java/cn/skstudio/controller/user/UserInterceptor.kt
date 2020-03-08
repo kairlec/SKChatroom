@@ -22,11 +22,7 @@ class UserInterceptor : HandlerInterceptor {
     }
 
     companion object {
-        private val blackAPIList: LinkedList<String> = object : LinkedList<String>() {
-            init {
-                add("/api/user/login")
-            }
-        }
+        private val blackAPIList = arrayOf("/api/user/login")
         val pathPatterns: List<String> = ArrayList(listOf(
                 "/api/user/**"
         ))

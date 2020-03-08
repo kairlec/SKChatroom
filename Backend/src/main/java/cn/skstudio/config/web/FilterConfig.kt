@@ -37,11 +37,8 @@ open class FilterConfig {
         return registration
     }
 
-    // 作为内部类定义过滤器
     @Order(0)
     inner class AllDomainFilter : Filter {
-
-        @Throws(IOException::class, ServletException::class)
         override fun doFilter(servletRequest: ServletRequest, servletResponse: ServletResponse, filterChain: FilterChain) {
             servletRequest.characterEncoding = "UTF-8"
             servletResponse.characterEncoding = "UTF-8"

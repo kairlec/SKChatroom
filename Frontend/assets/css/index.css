@@ -162,7 +162,7 @@
 }
 
 .box-my-list {
-  padding: 7px 10px 0;
+  padding: 4px 10px;
 }
 
 .box-my-list:hover {
@@ -183,4 +183,16 @@
   font-size: 30px !important;
   position: absolute;
   margin: 3px 11px;
+}
+
+.searchBtn{
+  padding: 0 14px;
+}
+
+.chatBtn{
+  
+}
+
+.addFriendBtn{
+  background-color: #1E9FFF;
 }

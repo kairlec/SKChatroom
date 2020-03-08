@@ -27,12 +27,12 @@ data class GuestUser(
         fun getInstance(user: User): GuestUser {
             logger.info("user id = ${user.userID}")
             val guestUser = GuestUser(user.userID,
-                    user.nickname ?: "未设置",
-                    if (user.privateEmail!!) "@PRIVATE?" else user.email!!,
-                    if (user.privateSex!!) "@PRIVATE?" else user.sex ?: "未知",
+                    user.nickname,
+                    if (user.privateEmail) "@PRIVATE?" else user.email,
+                    if (user.privateSex) "@PRIVATE?" else user.sex,
                     user.avatar ?: "@DEFAULT?",
-                    if (user.privatePhone!!) "@PRIVATE?" else user.phone ?: "",
-                    user.signature ?: "",
+                    if (user.privatePhone) "@PRIVATE?" else user.phone ?: "",
+                    user.signature,
                     WebSocketHandler.isOnline(user.userID))
             logger.info("user id = ${guestUser.userID}")
             return guestUser

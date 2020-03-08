@@ -8,6 +8,7 @@ package cn.skstudio.controller.public.activated
 import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
+import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -37,18 +38,18 @@ class ActivatedController {
      * @description: 激活接口
      * @return: 激活状态
      */
-    @RequestLimit(60,3)
+    @RequestLimit(60, 3)
     @RequestMapping(value = ["/activate"])
     fun activated(request: HttpServletRequest, response: HttpServletResponse): String {
         val activateCode = request.getParameter("activateCode")
         if (activateCode == null) {
             response.status = 403
             logger.info("无激活码")
-            return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_INVALID)//无效激活码
+            ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()//无效激活码
         } else if (activateCode.isEmpty()) {
             response.status = 403
             logger.info("激活码为空")
-            return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_INVALID)//无效激活码
+            ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()//无效激活码
         }
         logger.info(activateCode)
         val activatedInfo: SendEmail.ActivatedInfo?
@@ -56,78 +57,65 @@ class ActivatedController {
             //将激活码用私钥解密并反序列化
             activatedInfo = JSON.parseObject(RSACoder.decryptByPrivateKeyToString(activateCode, StartupConfig.privateKey), SendEmail.ActivatedInfo::class.java)
             if (activatedInfo == null) {
-                return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_INVALID)
+                ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_INVALID)
+            ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()
         }
         val nowTime = Date().time
         if (nowTime >= activatedInfo.eT) {
             //验证码已超过有效时间
-            return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_EXPIRE)
+            ServiceErrorEnum.ACTIVATE_TOKEN_EXPIRE.throwout()
         }
         logger.info(activatedInfo)
         val existsUser = LocalConfig.userService.getUserByUsername(activatedInfo.uN)
         if (existsUser != null) {
             //在注册的时候验证过用户名不存在,这里已经存在表示该链接已经成功激活过了,所以应该写为注册码过期
-            return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_TOKEN_EXPIRE)
+            ServiceErrorEnum.ACTIVATE_TOKEN_EXPIRE.throwout()
         }
         val user = User()
-        user.email = activatedInfo.eM
-        user.username = activatedInfo.uN
         user.userID = User.getNewID()
-        user.updatePassword(activatedInfo.pW)
-        user.nickname = "默认用户"
-        user.privateEmail = true
-        user.privatePhone = true
-        user.privateSex = false
+        val updateUser = user.readyToUpdate()
+        updateUser[User.UpdateUser.EMAIL_FIELD] = activatedInfo.eM
+        updateUser[User.UpdateUser.USERNAME_FIELD] = activatedInfo.uN
+        updateUser[User.UpdateUser.PASSWORD_FIELD] = activatedInfo.pW
+        updateUser[User.UpdateUser.NICKNAME_FIELD] = "默认用户"
+        user.applyUpdate(updateUser)
         LocalConfig.userService.insertUser(user)
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.ACTIVATE_UNKNOWN_EXCEPTION)
+                ?: ServiceErrorEnum.ACTIVATE_UNKNOWN_EXCEPTION.throwout()
         return ResponseDataUtils.OK()
     }
 
-    @RequestLimit(60,3)
+    @RequestLimit(60, 3)
     @RequestMapping(value = [""])
     fun register(request: HttpServletRequest): String {
         val username = request.getParameter("username")
-        var password = request.getParameter("password")
+        val password = request.getParameter("password")
         val email = request.getParameter("email")
         val domain = request.getParameter("domain")//前端需要提交一个domain域名,以指示激活成功的页面是什么,密钥将以QueryString拼接到域名后
         if (username == null || password == null || email == null || domain == null) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+            ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         }
         logger.info(domain)
         val user = User()
-        var error = user.setUsername(username)
-        if (!error.ok()) {
-            return ResponseDataUtils.Error(error)
+        val updateUser = user.readyToUpdate()
+        updateUser[User.UpdateUser.USERNAME_FIELD] = username
+        //因为还未生成ID,所以不能进行加密
+        updateUser[User.UpdateUser.PASSWORD_FIELD, false] = PasswordCoder.fromRequest(URLDecoder.decode(password, StandardCharsets.UTF_8)).trim()
+        updateUser[User.UpdateUser.EMAIL_FIELD] = email
+        user.applyUpdate(updateUser)
+        LocalConfig.userService.getUserByUsername(username)?.let {
+            ServiceErrorEnum.USERNAME_EXIST.throwout()
         }
-        //前端提交的所有密码都必须要经过一次RSA公钥加密
-        password = PasswordCoder.fromRequest(URLDecoder.decode(password, StandardCharsets.UTF_8)).trim()
-        logger.debug("由Request解密的密码:$password")
-        error = user.updatePassword(password, false)//因为还未生成ID,所以不能进行加密
-        if (!error.ok()) {
-            return ResponseDataUtils.Error(error)
-        }
-        error = user.updateEmail(email)
-        if (!error.ok()) {
-            return ResponseDataUtils.Error(error)
-        }
-        var existUser: User? = LocalConfig.userService.getUserByUsername(username)
-        if (existUser != null) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.USERNAME_EXIST)
-        }
-        existUser = LocalConfig.userService.getUserByEmail(email)
-        if (existUser != null) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.EMAIL_USED)
+        LocalConfig.userService.getUserByEmail(email)?.let {
+            ServiceErrorEnum.EMAIL_USED.throwout()
         }
         return if (EditableConfig.mailSender.enable) {
             //启用了激活邮件发送
             logger.info("尝试发送激活邮件")
             val thread = Thread(Runnable {
                 try {
-                    SendEmail.sendActivitedEmail(domain, user)
+                    SendEmail.sendActivatedEmail(domain, user)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -138,9 +126,11 @@ class ActivatedController {
             ResponseDataUtils.OK("VERIFICATION_REQUIRED")
         } else {
             user.userID = User.getNewID()
-            user.updatePassword(user.password)//生成了新的ID,需要对密码进行一次加密
-            user.nickname = "默认用户"
-            LocalConfig.userService.insertUser(user) ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+            val finalUpdateUser = user.readyToUpdate()
+            finalUpdateUser[User.UpdateUser.PASSWORD_FIELD] = user.password//生成了新的ID,需要对密码进行一次加密
+            finalUpdateUser[User.UpdateUser.NICKNAME_FIELD] = "默认用户"
+            user.applyUpdate(finalUpdateUser)
+            LocalConfig.userService.insertUser(user) ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
             //返回数据为无需验证
             ResponseDataUtils.OK("NO_VERIFICATION_REQUIRED")
         }

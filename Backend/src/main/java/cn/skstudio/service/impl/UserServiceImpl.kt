@@ -1,9 +1,11 @@
 package cn.skstudio.service.impl
 
 import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.controller.user.UserController
 import cn.skstudio.dao.FriendGroupMapper
 import cn.skstudio.dao.UserMapper
 import cn.skstudio.exception.ServiceErrorEnum
+import cn.skstudio.local.utils.ResourcesUtils
 import cn.skstudio.pojo.Group
 import cn.skstudio.pojo.User
 import cn.skstudio.service.UserService
@@ -20,6 +22,17 @@ class UserServiceImpl : UserService {
     @Autowired
     private lateinit var friendGroupMapper: FriendGroupMapper
 
+    private fun convertAvatar(user: User?): User? {
+        if (user == null) {
+            return null
+        }
+        if (user.avatar != null && user.avatar != "@DEFAULT?") {
+            val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, user.avatar!!).toBase64()
+            user.avatar = base64Data
+        }
+        return user
+    }
+
     override fun initialize(): Int? {
         return try {
             userMapper.initialize()
@@ -35,12 +48,13 @@ class UserServiceImpl : UserService {
             if (adminList == null || adminList.isEmpty()) {
                 val user = User()
                 user.userID = 1
-                user.admin = true
-                user.username = "skadmin"
-                user.updatePassword("skadmin")
-                user.updateNickname("管理员")
-                user.email = ""
-                userMapper.initializeAdmin(user)
+                val updateUser = user.readyToUpdate()
+                updateUser[User.UpdateUser.ADMIN_FIELD] = true
+                updateUser[User.UpdateUser.USERNAME_FIELD] = "skadmin"
+                updateUser[User.UpdateUser.PASSWORD_FIELD, true] = "skadmin"
+                updateUser[User.UpdateUser.NICKNAME_FIELD] = "管理员"
+                updateUser[User.UpdateUser.EMAIL_FIELD] = ""
+                userMapper.initializeAdmin(updateUser)
                 friendGroupMapper.addGroup(Group.newDefaultGroup(user.userID))
             } else {
                 1
@@ -53,7 +67,9 @@ class UserServiceImpl : UserService {
 
     override fun getAll(): List<User>? {
         return try {
-            userMapper.getAll()
+            val list = userMapper.getAll()
+            list?.forEach { convertAvatar(it) }
+            list
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -62,7 +78,9 @@ class UserServiceImpl : UserService {
 
     override fun getAllAdmin(): List<User>? {
         return try {
-            userMapper.getAllAdmin()
+            val list = userMapper.getAllAdmin()
+            list?.forEach { convertAvatar(it) }
+            list
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -71,7 +89,7 @@ class UserServiceImpl : UserService {
 
     override fun getUserByEmail(email: String): User? {
         return try {
-            userMapper.getUserByEmail(email)
+            convertAvatar(userMapper.getUserByEmail(email))
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -80,7 +98,7 @@ class UserServiceImpl : UserService {
 
     override fun getUserByUsername(username: String): User? {
         return try {
-            userMapper.getUserByUsername(username)
+            convertAvatar(userMapper.getUserByUsername(username))
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -89,7 +107,9 @@ class UserServiceImpl : UserService {
 
     override fun getUserByNickname(nickname: String): List<User>? {
         return try {
-            userMapper.getUserByNickname(nickname)
+            val list = userMapper.getUserByNickname(nickname)
+            list?.forEach { convertAvatar(it) }
+            list
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -98,7 +118,9 @@ class UserServiceImpl : UserService {
 
     override fun searchUserByNickname(nickname: String): List<User>? {
         return try {
-            userMapper.searchUserByNickname(nickname)
+            val list = userMapper.searchUserByNickname(nickname)
+            list?.forEach { convertAvatar(it) }
+            list
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -107,7 +129,7 @@ class UserServiceImpl : UserService {
 
     override fun getUserByID(id: Long): User? {
         return try {
-            userMapper.getUserByID(id)
+            convertAvatar(userMapper.getUserByID(id))
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -124,7 +146,7 @@ class UserServiceImpl : UserService {
         }
     }
 
-    override fun updateUser(user: User): Int? {
+    override fun updateUser(user: User.UpdateUser): Int? {
         return try {
             userMapper.updateUser(user)
         } catch (e: Exception) {
@@ -142,7 +164,7 @@ class UserServiceImpl : UserService {
         }
     }
 
-    override fun updateLoginInfo(user: User): Int? {
+    override fun updateLoginInfo(user: User.UpdateUser): Int? {
         return try {
             userMapper.updateLoginInfo(user)
         } catch (e: Exception) {
@@ -151,7 +173,7 @@ class UserServiceImpl : UserService {
         }
     }
 
-    override fun updatePassword(user: User): Int? {
+    override fun updatePassword(user: User.UpdateUser): Int? {
         return try {
             userMapper.updatePassword(user)
         } catch (e: Exception) {

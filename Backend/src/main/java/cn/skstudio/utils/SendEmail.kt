@@ -5,7 +5,6 @@ import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.pojo.User
 import com.alibaba.fastjson.JSON
 import org.apache.logging.log4j.LogManager
-import org.springframework.mail.MailException
 import org.springframework.mail.javamail.MimeMessageHelper
 import java.io.UnsupportedEncodingException
 import java.util.*
@@ -17,7 +16,7 @@ import javax.mail.internet.MimeUtility
 
 object SendEmail {
     private val logger = LogManager.getLogger(SendEmail::class.java)
-    fun Emails(): MimeMessage {
+    private fun emails(): MimeMessage {
         val properties = Properties()
         properties.setProperty("mail.host", EditableConfig.mailSender.host)
         properties.setProperty("mail.transport.protocol", EditableConfig.mailSender.protocol)
@@ -48,9 +47,8 @@ object SendEmail {
         return m.matches()
     }
 
-    @Throws(MessagingException::class, MailException::class)
-    fun sendEmail(subject: String, nickname: String?, content: String, html: Boolean, vararg toEmail: String?) {
-        val mimeMessage = Emails()
+    private fun sendEmail(subject: String, nickname: String?, content: String, html: Boolean, vararg toEmail: String?) {
+        val mimeMessage = emails()
         val mimeMessageHelper = MimeMessageHelper(mimeMessage, "UTF-8")
         mimeMessageHelper.setTo(toEmail)
         var nick = ""
@@ -67,23 +65,20 @@ object SendEmail {
         logger.info("邮件已发送")
     }
 
-    @Throws(MessagingException::class, MailException::class)
     fun sendTextEmail(subject: String, nickname: String?, text: String, vararg toEmail: String?) {
         sendEmail(subject, nickname, text, false, *toEmail)
     }
 
-    @Throws(MessagingException::class, MailException::class)
     fun sendHtmlEmail(subject: String, nickname: String?, html: String, vararg toEmail: String?) {
         sendEmail(subject, nickname, html, true, *toEmail)
     }
 
-    @Throws(Exception::class)
-    fun sendActivitedEmail(domain: String, user: User) {
+    fun sendActivatedEmail(domain: String, user: User) {
         val calendar = Calendar.getInstance()
         calendar.time = Date()
         calendar.add(Calendar.MINUTE, 30)
         calendar.timeInMillis
-        val activatedInfo = ActivatedInfo(user.username, user.password, user.email!!, calendar.timeInMillis)
+        val activatedInfo = ActivatedInfo(user.username, user.password, user.email, calendar.timeInMillis)
         logger.info(activatedInfo.toString())
         val url: String = domain + "?" + RSACoder.encryptByPublicKeyToString(activatedInfo.toString(), StartupConfig.publicKey)
         sendHtmlEmail("[SKChatroom]帐号注册激活", "SKChatroom", HtmlFormatBefore + url + HtmlFormatAfter, user.email)

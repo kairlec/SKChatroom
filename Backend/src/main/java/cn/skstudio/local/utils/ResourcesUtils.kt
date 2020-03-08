@@ -19,20 +19,6 @@ object ResourcesUtils {
         return Path.of(resourceRootPath.toAbsolutePath().toString(), "${resourceType.name}${File.separator}$resourceName")
     }
 
-    @Deprecated("此方法会读取inputStream流内数据导致流内数据丢失")
-    fun saveResource(resourceType: ResourceType, resourceName: String, inputStream: InputStream, overWrite: Boolean = false) {
-        val resourcePath = getResourcePath(resourceType, resourceName)
-        if (Files.exists(resourcePath) && !overWrite) {
-            throw java.nio.file.FileAlreadyExistsException(resourcePath.toString(), null, "File is already exist and overwrite option is not set of false.")
-        }
-        Files.deleteIfExists(resourcePath)
-        Files.createDirectories(resourcePath.parent)
-        Files.createFile(resourcePath)
-        resourcePath.toFile().outputStream().use {
-            inputStream.transferTo(it)
-        }
-    }
-
     fun saveResource(resourceType: ResourceType, resourceName: String, multipartFile: MultipartFile, overWrite: Boolean = false) {
         val resourcePath = getResourcePath(resourceType, resourceName)
         if (Files.exists(resourcePath) && !overWrite) {

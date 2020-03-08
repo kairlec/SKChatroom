@@ -21,26 +21,22 @@ import javax.servlet.http.HttpSession
 @RestController
 @RequestMapping("/api/group")
 class GroupController {
+
+
     @RequestMapping(value = ["/delete"])
     fun delete(request: HttpServletRequest, session: HttpSession): String {
         val user = session.getAttribute("user") as User
-        val groupID: Long
-        try {
-            groupID = request.getParameter("id")?.toLong()
-                    ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
-            return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID)
+        val groupID = request.getParameter("id")?.toLongOrNull()
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
+        val group = LocalConfig.friendGroupService.getGroup(groupID)
+                ?: ServiceErrorEnum.GROUP_NOT_EXISTS.throwout()
+        if (!group.ownerVerify(user.userID)) {
+            ServiceErrorEnum.GROUP_NOT_ALLOW.throwout()
         }
-        val eGroup = LocalConfig.friendGroupService.getGroup(groupID)
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.GROUP_NOT_EXISTS)
-        if (!eGroup.ownerVerify(user.userID)) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.GROUP_NOT_ALLOW)
-        }
-        return if (LocalConfig.friendGroupService.deleteGroup(groupID) == null) {
-            ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+        if (LocalConfig.friendGroupService.deleteGroup(groupID) == null) {
+            ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            ResponseDataUtils.successData(groupID)
+            return ResponseDataUtils.successData(groupID)
         }
     }
 
@@ -48,57 +44,39 @@ class GroupController {
     fun create(request: HttpServletRequest, session: HttpSession): String {
         val user = session.getAttribute("user") as User
         val groupName = request.getParameter("name")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        val groupOrder: Int
-        try {
-            groupOrder = request.getParameter("order")?.toInt()
-                    ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
-            return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID)
-        }
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
+        val groupOrder = request.getParameter("order")?.toIntOrNull()
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val group = Group(Group.getNewGroupID(), groupOrder, user.userID, groupName)
-        return if (LocalConfig.friendGroupService.addGroup(group) == null) {
-            ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+        if (LocalConfig.friendGroupService.addGroup(group) == null) {
+            ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            ResponseDataUtils.successData(group)
+            return ResponseDataUtils.successData(group)
         }
     }
 
     @RequestMapping(value = ["/update"])
     fun update(request: HttpServletRequest, session: HttpSession): String {
         val user = session.getAttribute("user") as User
-        val groupID: Long
-        try {
-            groupID = request.getParameter("id")?.toLong()
-                    ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
-            return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID)
-        }
+        val groupID: Long = request.getParameter("id")?.toLongOrNull()
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val eGroup = LocalConfig.friendGroupService.getGroup(groupID)
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.GROUP_NOT_EXISTS)
+                ?: ServiceErrorEnum.GROUP_NOT_EXISTS.throwout()
         if (!eGroup.ownerVerify(user.userID)) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.GROUP_NOT_ALLOW)
+            ServiceErrorEnum.GROUP_NOT_ALLOW.throwout()
         }
         val groupName = request.getParameter("name")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         if (groupName.length > StaticConfig.maxGroupName) {
-            return ResponseDataUtils.Error(ServiceErrorEnum.GROUP_NAME_TOO_LONG)
+            ServiceErrorEnum.GROUP_NAME_TOO_LONG.throwout()
         }
-        val groupOrder: Int
-        try {
-            groupOrder = request.getParameter("order")?.toInt()
-                    ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
-            return ResponseDataUtils.Error(ServiceErrorEnum.ID_INVALID)
-        }
+        val groupOrder = request.getParameter("order")?.toIntOrNull()
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val group = Group(groupID, groupOrder, user.userID, groupName)
-        return if (LocalConfig.friendGroupService.updateGroup(group) == null) {
-            ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+        if (LocalConfig.friendGroupService.updateGroup(group) == null) {
+            ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            ResponseDataUtils.successData(group)
+            return ResponseDataUtils.successData(group)
         }
     }
 

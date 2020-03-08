@@ -1,6 +1,7 @@
 package cn.skstudio.controller.admin
 
 
+import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -15,20 +16,23 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping("/api/admin")
 @RestController
 class AdminController {
+
     /**
      * @description: 获取相应的配置项内容
      * @return: 相应配置项的json字符串
      */
     @RequestMapping(value = ["/get/{type}"])
-    fun get(@PathVariable type: String, request: HttpServletRequest): String {
-        when (type) {
+    fun get(@PathVariable type: String): String {
+        return when (type) {
             "mailSender" -> {
                 val mailSender = LocalConfig.mailSenderService.getMailSender()
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
-                return ResponseDataUtils.successData(mailSender)
+                        ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
+                ResponseDataUtils.successData(mailSender)
+            }
+            else -> {
+                ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
             }
         }
-        return ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
     }
 
     /**
@@ -37,10 +41,12 @@ class AdminController {
      */
     @RequestMapping(value = ["/update/{type}"])
     fun update(@PathVariable type: String, request: HttpServletRequest): String {
-        when (type) {
-            "mailSender" -> return updateMailSenderConfig(request)
+        return when (type) {
+            "mailSender" -> updateMailSenderConfig(request)
+            else -> {
+                ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
+            }
         }
-        return ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
     }
 
     /**
@@ -48,23 +54,23 @@ class AdminController {
      * @return:更新成功与否的字符串
      */
     private fun updateMailSenderConfig(request: HttpServletRequest): String {
-        val port = request.getParameter("port")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+        val port = request.getParameter("port")?.toIntOrNull()
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val host = request.getParameter("host")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val protocol = request.getParameter("protocol")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val encoding = request.getParameter("encoding")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val username = request.getParameter("username")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val password = request.getParameter("password")
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val enable = request.getParameter("enable")?.toBoolean()
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.INSUFFICIENT_PARAMETERS)
-        val mailSender = MailSender(port.toInt(), host, protocol, encoding, username, password, enable)
+                ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
+        val mailSender = MailSender(port, host, protocol, encoding, username, password, enable)
         LocalConfig.mailSenderService.updateMailSender(mailSender)
-                ?: return ResponseDataUtils.Error(ServiceErrorEnum.IO_EXCEPTION)
+                ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
         return ResponseDataUtils.successData(mailSender)
     }
 

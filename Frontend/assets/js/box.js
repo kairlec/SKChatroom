@@ -196,6 +196,10 @@ const userMethod = {
     }
     this.userListData.set(data.userID, data)
   },
+  isFriend: function (userID) {
+    return false
+    return this.userListData.has(userID)
+  },
   addOrRefreshMessage: function (data) {
     this.userListData.add(data.fromID)
   },
@@ -219,15 +223,24 @@ const userMethod = {
     // TODO:添加好友的块
     const DOM = (
       $('<div/>').attr({ class: 'layui-row box-my-list user', id: 'a' + user.userID }).html(
-        $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+        $('<div/>').attr({ class: 'layui-col-xs1' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12' }).html(
               $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
-        $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+        $('<div/>').attr({ class: 'layui-col-xs8' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
               $('<span>').attr({ class: 'userNickname' }).text(user.nickname))).append(
-            $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).text(user.signature))))
+            $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).text(user.signature)))).append(
+        $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).html(
+            $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+              $('<button/>').attr({ class: 'layui-btn searchBtn informationBtn', type: 'button' }).text('资料'))).append(
+            $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+              $('<button/>').attr({ class: `layui-btn searchBtn ${this.isFriend(user.userID) ? 'chatBtn' : 'addFriendBtn'}`, type: 'button' }).text(this.isFriend(user.userID) ? '聊天' : '添加'))
+          )
+        )
+      )
     )
     return DOM
   },
@@ -424,9 +437,9 @@ $(() => {
     parent.menuIndex = parent.mouseRightMenu.open(getBlankData(), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
       // TODO: 空白块右击
       switch (data.type) {
-        case 1:
+        case 1:// 刷新列表
           break
-        case 2:
+        case 2:// 新建分组
           break
         // case 3:
         //   break
@@ -437,26 +450,36 @@ $(() => {
   $('#toolbar').on('click', '.layui-icon-search', function (event) {
     parent.layer.prompt({
       formType: 0,
-      title: '请输入查找内容',
+      title: '查找好友',
       area: ['800px', '600px'] // 自定义文本域宽高
     }, function (value, index, elem) {
       userMethod.searchUser(value, function (data) {
         // TODO: 好友搜索
         parent.layer.open({
           type: 1,
-          title: '添加好友',
+          title: '查找好友',
           content: '',
           id: 'searchFriendPanel',
-          area: ['500px', '300px'],
+          area: ['560px', '300px'],
           success: function (layero, index) {
             console.log($(layero))
+            var panel
             $.each(data, function (index, item) {
               if (item.avatar == null || item.avatar === '@DEFAULT?') {
                 item.avatar = 'assets/images/1.png'
               }
-              var panel = $(layero).children('#searchFriendPanel')
+              panel = $(layero).children('#searchFriendPanel')
               console.log(panel)
               panel.append(userMethod.newAddFriendDom(item))
+            })
+            panel.on('click', '.informationBtn', function (event) {
+              console.log('好友资料')
+            })
+            panel.on('click', '.chatBtn', function (event) {
+              console.log('好友聊天')
+            })
+            panel.on('click', '.addFriendBtn', function (event) {
+              console.log('好友添加')
             })
           }
         })

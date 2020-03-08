@@ -39,12 +39,7 @@ class SKException : RuntimeException {
      */
     constructor(detailedMessage: String?, t: Throwable?) : super(detailedMessage, t)
 
-    /**
-     * Getter method for property <tt>errorCode</tt>.
-     *
-     * @return property value of errorCode
-     */
-    fun getServiceError(): ServiceErrorEnum {
-        return serviceErrorEnum ?: ResponseDataUtils.fromException(this)
+    fun getServiceError(): ServiceErrorEnum? {
+        return serviceErrorEnum
     }
 }

@@ -80,11 +80,12 @@ function start () {
       withCredentials: true
     },
     success: function (data) {
+      console.log(data)
       if (data.code === 30007) {
         window.location.href = 'login'
       } else if (data.code !== 0) {
         layer.close(waitIndex)
-        var msg = data.message || '连接失败'
+        var msg = data.msg || '连接失败'
         layer.confirm(msg + ',是否重新连接', { icon: 3, title: '错误' }, function (index) {
           start()
           layer.close(index)

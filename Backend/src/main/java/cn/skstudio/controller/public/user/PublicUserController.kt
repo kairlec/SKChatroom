@@ -26,39 +26,34 @@ class PublicUserController {
 
     @RequestMapping(value = ["/pk"])
     fun getPublicKey(): String {
-        return ResponseDataUtils.successData(StartupConfig.publicKey)
+        return ResponseDataUtils.OK(StartupConfig.publicKey)
     }
 
     @RequestMapping(value = ["/captcha"])
     fun captcha(session: HttpSession, response: HttpServletResponse): String {
-        val captcha: Captcha? = session.getAttribute("captcha") as Captcha?
-        if (captcha == null) {
-            logger.info("当前无需验证,错误的验证码请求")
-            response.status = 403
-            return ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST)
+        val captcha = session.getAttribute("captcha")
+        if (captcha is Captcha) {
+            return ResponseDataUtils.OK(captcha.skImage.toBase64())
         }
-        logger.info("请求验证码:" + captcha.captchaString)
-        //ResponseDataUtils.writeResponseImage(response,captcha.skImage)
-        return ResponseDataUtils.successData(captcha.skImage.toBase64())
+        response.status = 403
+        ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
     }
 
     @RequestMapping(value = ["/test/captcha"])
-    fun testCaptcha(response: HttpServletResponse): String {
-        val captcha: Captcha = Captcha.getInstant(4)
-        logger.info("请求测试验证码:" + captcha.captchaString)
-        logger.info("输出验证码到流")
+    fun testCaptcha(): String {
+        val captcha: Captcha = Captcha.getInstant(StaticConfig.captchaCount)
         return ResponseDataUtils.successData(captcha.skImage.toBase64())
-        //response.outputStream.use { outputStream -> captcha.write(outputStream) }
     }
 
     @RequestMapping(value = ["/newcaptcha"])
-    fun newcaptcha(session: HttpSession, response: HttpServletResponse) {
-        val captcha: Captcha? = session.getAttribute("captcha") as Captcha?
-        if (captcha == null) {
-            response.status = 403
-            return
+    fun newcaptcha(session: HttpSession, response: HttpServletResponse):String {
+        val captcha = session.getAttribute("captcha")
+        if (captcha is Captcha) {
+            val newCaptcha = Captcha.getInstant(StaticConfig.captchaCount)
+            session.setAttribute("captcha", newCaptcha)
+            return ResponseDataUtils.successData(newCaptcha.skImage.toBase64())
         }
-        session.setAttribute("captcha", Captcha.getInstant(StaticConfig.captchaCount))
-        logger.info("刷新验证码:" + (session.getAttribute("captcha") as Captcha).captchaString)
+        response.status = 403
+        ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
     }
 }

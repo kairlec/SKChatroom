@@ -1,5 +1,6 @@
 package cn.skstudio.local.utils
 
+import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.ResponseData
 import cn.skstudio.pojo.SKImage
@@ -17,6 +18,11 @@ object ResponseDataUtils {
     }
 
     fun Error(e: Exception): String {
+        if(e is SKException){
+            e.getServiceError()?.let{
+                return Error(it)
+            }
+        }
         return fromException(e).toString()
     }
 

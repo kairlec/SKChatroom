@@ -26,11 +26,7 @@ class GroupInterceptor : HandlerInterceptor {
     }
 
     companion object {
-        private val blackAPIList: LinkedList<String> = object : LinkedList<String>() {
-            init {
-
-            }
-        }
+        private val blackAPIList= emptyArray<String>()
         val pathPatterns: List<String> = ArrayList(listOf(
                 "/api/group/**"
         ))

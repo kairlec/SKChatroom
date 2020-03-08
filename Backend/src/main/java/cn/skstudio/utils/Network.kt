@@ -22,11 +22,9 @@ object Network {
                 ip = request.remoteAddr
             }
         } else if (ip.length > 15) {
-            val ips = ip.split(",").toTypedArray()
-            for (strIp in ips) {
-                if (!"unknown".equals(strIp, ignoreCase = true)) {
-                    ip = strIp
-                    break
+            ip.split(",").toTypedArray().forEach {
+                if (!"unknown".equals(it, ignoreCase = true)) {
+                    return it
                 }
             }
         }

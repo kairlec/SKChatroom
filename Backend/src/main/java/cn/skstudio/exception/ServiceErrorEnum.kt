@@ -12,10 +12,12 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
 
     //无异常
     NO_ERROR(0, "OK", null),
+
     //未指名的异常
     UNSPECIFIED(90001, "未指名的错误", null),
     UNKNOWN(90002, "未知错误", null),
     AN_EXCEPTION_OCCURRED(90003, "发生了一个异常", null),
+
     //请求异常
     UNKNOWN_REQUEST(400, "未知的请求", null),
     FILE_NOT_EXISTS(404, "文件不存在", null),
@@ -38,15 +40,19 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
     USERNAME_EMPTY(61002, "用户名为空", null),
     USERNAME_CONTAINS_SP_CHAR(61003, "用户名含有非法字符", null),
     USERNAME_ALL_DIGITAL(61004, "用户名不能为纯数字", null),
+
     //昵称
     NICKNAME_TOO_LONG(61100, "昵称太长", null),
     NICKNAME_EMPTY(61101, "昵称为空", null),
+
     //密码
     WEAK_PASSWORD(62000, "密码强度太弱", null),
     PASSWORD_TOO_LONG(62001, "密码太长", null),
+
     //邮箱
     WRONG_EMAIL(63000, "错误的邮箱", null),
     EMAIL_USED(63001, "邮箱已被使用", null),
+
     //性别
     UNKNOWN_SEX(64000, "未知性别", null),
     GROUP_NOT_EXISTS(65000, "组不存在", null),
@@ -92,8 +98,11 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
 
     //服务器异常
     IO_EXCEPTION(50001, "IO出现错误", null),
-    INITIALIZE_FAILED(50003, "初始化系统出现错误", null);
+    INITIALIZE_FAILED(50003, "初始化系统出现错误", null),
+    TYPE_MISMATCH(50004, "类型不匹配", null),
+    INVALID_TYPE(50005, "无效类型", null),
 
+    ;
 
     fun data(data: Any?): ServiceErrorEnum {
         this.data = data
@@ -108,7 +117,15 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
         return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue)
     }
 
+    fun throwout():Nothing{
+        throw SKException(this)
+    }
+
     companion object {
+        fun throwout(error: ServiceErrorEnum):Nothing{
+            throw SKException(error)
+        }
+
         fun fromException(e: Exception): ServiceErrorEnum {
             lateinit var expMessage: String
             ByteArrayOutputStream().use {

@@ -36,16 +36,16 @@ interface UserService {
     fun insertUser(user: User): Int?
 
     //更新用户常规信息
-    fun updateUser(user: User): Int?
+    fun updateUser(user: User.UpdateUser): Int?
 
     //根据ID删除用户
     fun deleteUser(id: Long): Int?
 
     //更新用户的登录信息(包括lastSessionID和IP)
-    fun updateLoginInfo(user: User): Int?
+    fun updateLoginInfo(user: User.UpdateUser): Int?
 
     //更新用户的密码信息
-    fun updatePassword(user: User): Int?
+    fun updatePassword(user: User.UpdateUser): Int?
 
     //检查用户名是否符合
     fun checkUsername(username: String): ServiceErrorEnum
