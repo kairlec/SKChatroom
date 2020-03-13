@@ -10,13 +10,13 @@ import javax.servlet.http.HttpServletResponse
 
 @Component
 class UserInterceptor : HandlerInterceptor {
-    @Throws(Exception::class)
+
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val error = RequestAuthenticator.authHttpServletRequest(request, blackAPIList)
         return if (error.ok()) {
             true
         } else {
-            response.writer.write(ResponseDataUtils.Error(error))
+            response.writer.write(ResponseDataUtils.error(error).toString())
             false
         }
     }

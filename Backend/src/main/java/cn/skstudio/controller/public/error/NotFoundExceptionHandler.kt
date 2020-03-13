@@ -1,5 +1,6 @@
 package cn.skstudio.controller.public.error
 
+import cn.skstudio.`interface`.ResponseDataInterface
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.ResponseDataUtils
 import org.springframework.boot.web.servlet.error.ErrorController
@@ -23,7 +24,7 @@ class NotFoundExceptionHandler : ErrorController {
 
     @RequestMapping(value = ["/error"])
     @ResponseBody
-    fun error(request: HttpServletRequest): String {
-        return ResponseDataUtils.Error(ServiceErrorEnum.UNKNOWN_REQUEST.data(request.requestURI))
+    fun error(request: HttpServletRequest): ResponseDataInterface {
+        return ResponseDataUtils.error(ServiceErrorEnum.UNKNOWN_REQUEST.data(request.requestURI))
     }
 }

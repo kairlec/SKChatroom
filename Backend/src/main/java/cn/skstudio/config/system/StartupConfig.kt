@@ -21,16 +21,15 @@ class StartupConfig {
     @Value("\${publickey:#{null}}")
     fun setPublicKey(publicKey: String) {
         Companion.publicKey = publicKey
-        var stringArrayWithDefaults: Array<String?>
     }
 
     @Value("\${allowedorigins:}")
-    fun setAllowedOrigins(allowedOrigins: Array<String?>) {
+    fun setAllowedOrigins(allowedOrigins: Array<String>) {
         Companion.allowedOrigins = allowedOrigins
     }
 
     @Value("\${allowedheaders:}")
-    fun setAllowedHeaders(allowedHeaders: Array<String?>) {
+    fun setAllowedHeaders(allowedHeaders: Array<String>) {
         Companion.allowedHeaders = allowedHeaders
     }
 
@@ -42,8 +41,8 @@ class StartupConfig {
     companion object {
         lateinit var privateKey: String
         lateinit var publicKey: String
-        lateinit var allowedOrigins: Array<String?>
-        lateinit var allowedHeaders: Array<String?>
+        lateinit var allowedOrigins: Array<String>
+        lateinit var allowedHeaders: Array<String>
         var redisEnabled by Delegates.notNull<Boolean>()
     }
 

@@ -5,10 +5,11 @@ package cn.skstudio.controller.public.activated
  * @version: 2.2
  * @description: 注册和激活接口
  */
+import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
-import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -27,7 +28,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-@RequestMapping("/api/public/register")
+@JsonRequestMapping("/api/public/register")
 @RestController
 class ActivatedController {
     companion object {
@@ -40,7 +41,7 @@ class ActivatedController {
      */
     @RequestLimit(60, 3)
     @RequestMapping(value = ["/activate"])
-    fun activated(request: HttpServletRequest, response: HttpServletResponse): String {
+    fun activated(request: HttpServletRequest, response: HttpServletResponse): ResponseDataInterface {
         val activateCode = request.getParameter("activateCode")
         if (activateCode == null) {
             response.status = 403
@@ -83,12 +84,12 @@ class ActivatedController {
         user.applyUpdate(updateUser)
         LocalConfig.userService.insertUser(user)
                 ?: ServiceErrorEnum.ACTIVATE_UNKNOWN_EXCEPTION.throwout()
-        return ResponseDataUtils.OK()
+        return ResponseDataUtils.ok()
     }
 
     @RequestLimit(60, 3)
     @RequestMapping(value = [""])
-    fun register(request: HttpServletRequest): String {
+    fun register(request: HttpServletRequest): ResponseDataInterface {
         val username = request.getParameter("username")
         val password = request.getParameter("password")
         val email = request.getParameter("email")
@@ -123,7 +124,7 @@ class ActivatedController {
             thread.start()
             logger.info("邮箱发送线程已启动")
             //返回数据为需要验证
-            ResponseDataUtils.OK("VERIFICATION_REQUIRED")
+            ResponseDataUtils.ok("VERIFICATION_REQUIRED")
         } else {
             user.userID = User.getNewID()
             val finalUpdateUser = user.readyToUpdate()
@@ -132,7 +133,7 @@ class ActivatedController {
             user.applyUpdate(finalUpdateUser)
             LocalConfig.userService.insertUser(user) ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
             //返回数据为无需验证
-            ResponseDataUtils.OK("NO_VERIFICATION_REQUIRED")
+            ResponseDataUtils.ok("NO_VERIFICATION_REQUIRED")
         }
     }
 }

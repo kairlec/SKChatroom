@@ -21,7 +21,7 @@ class AdminInterceptor : HandlerInterceptor {
             //在请求验证器中的成功data会返回用户身份
             "UserAdmin".equals(error.data as String, true)
         } else {
-            response.writer.write(ResponseDataUtils.Error(error))
+            response.writer.write(ResponseDataUtils.error(error).toString())
             false
         }
     }

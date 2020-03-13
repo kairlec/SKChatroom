@@ -13,7 +13,7 @@ class SKException : RuntimeException {
     /**
      * 由业务错误ServiceError引发
      */
-    constructor(serviceErrorEnum: ServiceErrorEnum?) : super() {
+    constructor(serviceErrorEnum: ServiceErrorEnum) : super(serviceErrorEnum.msg) {
         this.serviceErrorEnum = serviceErrorEnum
     }
 
@@ -22,14 +22,14 @@ class SKException : RuntimeException {
      *
      * @param detailedMessage 详细描述
      */
-    constructor(detailedMessage: String?) : super(detailedMessage)
+    constructor(detailedMessage: String) : super(detailedMessage)
 
     /**
      * 指定导火索构造通用异常
      *
      * @param t 导火索
      */
-    constructor(t: Throwable?) : super(t) {}
+    constructor(t: Throwable) : super(t)
 
     /**
      * 构造通用异常
@@ -37,7 +37,7 @@ class SKException : RuntimeException {
      * @param detailedMessage 详细描述
      * @param t               导火索
      */
-    constructor(detailedMessage: String?, t: Throwable?) : super(detailedMessage, t)
+    constructor(detailedMessage: String, t: Throwable) : super(detailedMessage, t)
 
     fun getServiceError(): ServiceErrorEnum? {
         return serviceErrorEnum

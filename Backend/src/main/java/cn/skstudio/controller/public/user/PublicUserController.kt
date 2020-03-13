@@ -5,6 +5,8 @@ package cn.skstudio.controller.public.user
  * @description: 公开的用户接口类
  */
 
+import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 
-@RequestMapping("/api/public/user")
+@JsonRequestMapping("/api/public/user")
 @RestController
 class PublicUserController {
     companion object {
@@ -25,33 +27,33 @@ class PublicUserController {
     }
 
     @RequestMapping(value = ["/pk"])
-    fun getPublicKey(): String {
-        return ResponseDataUtils.OK(StartupConfig.publicKey)
+    fun getPublicKey(): ResponseDataInterface {
+        return ResponseDataUtils.ok(StartupConfig.publicKey)
     }
 
     @RequestMapping(value = ["/captcha"])
-    fun captcha(session: HttpSession, response: HttpServletResponse): String {
+    fun captcha(session: HttpSession, response: HttpServletResponse): ResponseDataInterface {
         val captcha = session.getAttribute("captcha")
         if (captcha is Captcha) {
-            return ResponseDataUtils.OK(captcha.skImage.toBase64())
+            return ResponseDataUtils.ok(captcha.skImage.toBase64())
         }
         response.status = 403
         ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
     }
 
     @RequestMapping(value = ["/test/captcha"])
-    fun testCaptcha(): String {
+    fun testCaptcha(): ResponseDataInterface {
         val captcha: Captcha = Captcha.getInstant(StaticConfig.captchaCount)
-        return ResponseDataUtils.successData(captcha.skImage.toBase64())
+        return ResponseDataUtils.ok(captcha.skImage.toBase64())
     }
 
     @RequestMapping(value = ["/newcaptcha"])
-    fun newcaptcha(session: HttpSession, response: HttpServletResponse):String {
+    fun newcaptcha(session: HttpSession, response: HttpServletResponse):ResponseDataInterface {
         val captcha = session.getAttribute("captcha")
         if (captcha is Captcha) {
             val newCaptcha = Captcha.getInstant(StaticConfig.captchaCount)
             session.setAttribute("captcha", newCaptcha)
-            return ResponseDataUtils.successData(newCaptcha.skImage.toBase64())
+            return ResponseDataUtils.ok(newCaptcha.skImage.toBase64())
         }
         response.status = 403
         ServiceErrorEnum.UNKNOWN_REQUEST.throwout()

@@ -12,13 +12,26 @@ import cn.skstudio.controller.group.GroupInterceptor
 import cn.skstudio.controller.user.UserInterceptor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.StringHttpMessageConverter
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import java.nio.charset.StandardCharsets
 
 
 @Configuration
-open class InterceptorRegister : WebMvcConfigurer {
+open class WebConfig : WebMvcConfigurer {
+    /**
+     * 设置响应的字符编码
+     * @return HttpMessageConverter
+     */
+    @Bean
+    open fun responseBodyConverter(): HttpMessageConverter<String> {
+        return StringHttpMessageConverter(StandardCharsets.UTF_8)
+    }
+
     @Bean
     open fun adminInterceptorMaker(): AdminInterceptor {
         return AdminInterceptor()
@@ -37,6 +50,15 @@ open class InterceptorRegister : WebMvcConfigurer {
     @Bean
     open fun requestInterceptorMaker():RequestLimitInterceptor{
         return RequestLimitInterceptor()
+    }
+
+    override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
+        super.configureMessageConverters(converters)
+        converters.add(responseBodyConverter())
+    }
+
+    override fun configureContentNegotiation(configurer: ContentNegotiationConfigurer) {
+        configurer.favorPathExtension(false) // 支持后缀匹配
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {

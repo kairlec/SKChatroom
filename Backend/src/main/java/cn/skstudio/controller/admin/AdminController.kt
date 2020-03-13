@@ -1,7 +1,8 @@
 package cn.skstudio.controller.admin
 
 
-import cn.skstudio.exception.SKException
+import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
 
-@RequestMapping("/api/admin")
+@JsonRequestMapping("/api/admin")
 @RestController
 class AdminController {
 
@@ -22,12 +23,12 @@ class AdminController {
      * @return: 相应配置项的json字符串
      */
     @RequestMapping(value = ["/get/{type}"])
-    fun get(@PathVariable type: String): String {
+    fun get(@PathVariable type: String): ResponseDataInterface {
         return when (type) {
             "mailSender" -> {
                 val mailSender = LocalConfig.mailSenderService.getMailSender()
                         ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
-                ResponseDataUtils.successData(mailSender)
+                ResponseDataUtils.ok(mailSender)
             }
             else -> {
                 ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
@@ -40,7 +41,7 @@ class AdminController {
      * @return: 更新状态(成功更新或失败)
      */
     @RequestMapping(value = ["/update/{type}"])
-    fun update(@PathVariable type: String, request: HttpServletRequest): String {
+    fun update(@PathVariable type: String, request: HttpServletRequest): ResponseDataInterface {
         return when (type) {
             "mailSender" -> updateMailSenderConfig(request)
             else -> {
@@ -53,7 +54,7 @@ class AdminController {
      * @description: 更新邮件发送配置
      * @return:更新成功与否的字符串
      */
-    private fun updateMailSenderConfig(request: HttpServletRequest): String {
+    private fun updateMailSenderConfig(request: HttpServletRequest): ResponseDataInterface {
         val port = request.getParameter("port")?.toIntOrNull()
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
         val host = request.getParameter("host")
@@ -71,7 +72,7 @@ class AdminController {
         val mailSender = MailSender(port, host, protocol, encoding, username, password, enable)
         LocalConfig.mailSenderService.updateMailSender(mailSender)
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
-        return ResponseDataUtils.successData(mailSender)
+        return ResponseDataUtils.ok(mailSender)
     }
 
     companion object {

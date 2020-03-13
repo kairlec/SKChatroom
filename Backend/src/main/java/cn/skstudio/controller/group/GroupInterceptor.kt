@@ -20,7 +20,7 @@ class GroupInterceptor : HandlerInterceptor {
         return if (error.ok()) {
             true
         } else {
-            response.writer.write(ResponseDataUtils.Error(error))
+            response.writer.write(ResponseDataUtils.error(error).toString())
             false
         }
     }

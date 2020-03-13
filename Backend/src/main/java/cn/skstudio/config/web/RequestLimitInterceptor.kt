@@ -58,7 +58,7 @@ class RequestLimitInterceptor : HandlerInterceptor {
                 }
                 else -> {
                     logger.warn(""""拦截到"$ip"对"$uri"的异常连续访问""")
-                    response.writer.write(ResponseDataUtils.Error(ServiceErrorEnum.REQUEST_FORBIDDEN))
+                    response.writer.write(ResponseDataUtils.error(ServiceErrorEnum.REQUEST_FORBIDDEN).toString())
                     logger.info("过期时间:" + LocalConfig.redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
                     return false
                 }

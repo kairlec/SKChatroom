@@ -25,7 +25,7 @@ class WebSocketInterceptor : HttpSessionHandshakeInterceptor() {
             val error = RequestAuthenticator.authHttpSession(session)
             if (!error.ok()) {
                 if (response is ServletServerHttpResponse) {
-                    response.servletResponse.writer.write(ResponseDataUtils.Error(error))
+                    response.servletResponse.writer.write(ResponseDataUtils.error(error).toString())
                 }
                 return false
             }

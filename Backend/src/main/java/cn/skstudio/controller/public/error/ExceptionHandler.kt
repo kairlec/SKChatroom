@@ -1,5 +1,6 @@
 package cn.skstudio.controller.public.error
 
+import cn.skstudio.`interface`.ResponseDataInterface
 import cn.skstudio.local.utils.ResponseDataUtils
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -16,8 +17,8 @@ import org.springframework.web.bind.annotation.ResponseBody
 class ExceptionHandler {
     @ExceptionHandler
     @ResponseBody
-    fun exception(e: Exception): String {
+    fun exception(e: Exception): ResponseDataInterface {
         e.printStackTrace()
-        return ResponseDataUtils.Error(e)
+        return ResponseDataUtils.error(e)
     }
 }

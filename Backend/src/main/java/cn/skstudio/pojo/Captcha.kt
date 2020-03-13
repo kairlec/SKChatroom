@@ -24,13 +24,12 @@ class Captcha private constructor(var captchaString: String, var skImage: SKImag
 
     companion object {
         private val mapTable = "abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNOPQRSTVWXYZ123456789".toCharArray()
+
         //给定范围获得随机颜色
-        private fun getRandColor(fc: Int, bc: Int): Color {
-            var fc = fc
-            var bc = bc
+        private fun getRandColor(_fc: Int, _bc: Int): Color {
+            val fc = if (_fc > 255) _fc else 255
+            val bc = if (_bc > 255) _bc else 255
             val random = Random()
-            if (fc > 255) fc = 255
-            if (bc > 255) bc = 255
             val r = fc + random.nextInt(bc - fc)
             val g = fc + random.nextInt(bc - fc)
             val b = fc + random.nextInt(bc - fc)
@@ -52,6 +51,7 @@ class Captcha private constructor(var captchaString: String, var skImage: SKImag
             try {
                 val font = Font.createFont(Font.TRUETYPE_FONT, Captcha::class.java.getResourceAsStream("/fonts/ComingSoon-Regular.ttf"))
                 g.font = font.deriveFont(Font.BOLD, 19f)
+
             } catch (e: FontFormatException) {
                 e.printStackTrace()
             } catch (e: IOException) {

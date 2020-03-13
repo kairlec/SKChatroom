@@ -1,5 +1,7 @@
 package cn.skstudio.controller.group;
 
+import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
@@ -19,12 +21,12 @@ import javax.servlet.http.HttpSession
  */
 
 @RestController
-@RequestMapping("/api/group")
+@JsonRequestMapping("/api/group")
 class GroupController {
 
 
     @RequestMapping(value = ["/delete"])
-    fun delete(request: HttpServletRequest, session: HttpSession): String {
+    fun delete(request: HttpServletRequest, session: HttpSession): ResponseDataInterface {
         val user = session.getAttribute("user") as User
         val groupID = request.getParameter("id")?.toLongOrNull()
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
@@ -36,12 +38,12 @@ class GroupController {
         if (LocalConfig.friendGroupService.deleteGroup(groupID) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.successData(groupID)
+            return ResponseDataUtils.ok(groupID)
         }
     }
 
     @RequestMapping(value = ["/create"])
-    fun create(request: HttpServletRequest, session: HttpSession): String {
+    fun create(request: HttpServletRequest, session: HttpSession): ResponseDataInterface {
         val user = session.getAttribute("user") as User
         val groupName = request.getParameter("name")
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
@@ -51,12 +53,12 @@ class GroupController {
         if (LocalConfig.friendGroupService.addGroup(group) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.successData(group)
+            return ResponseDataUtils.ok(group)
         }
     }
 
     @RequestMapping(value = ["/update"])
-    fun update(request: HttpServletRequest, session: HttpSession): String {
+    fun update(request: HttpServletRequest, session: HttpSession): ResponseDataInterface {
         val user = session.getAttribute("user") as User
         val groupID: Long = request.getParameter("id")?.toLongOrNull()
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
@@ -76,7 +78,7 @@ class GroupController {
         if (LocalConfig.friendGroupService.updateGroup(group) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.successData(group)
+            return ResponseDataUtils.ok(group)
         }
     }
 

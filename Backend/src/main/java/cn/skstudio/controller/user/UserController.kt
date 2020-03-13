@@ -1,8 +1,9 @@
 package cn.skstudio.controller.user
 
+import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.controller.websocket.WebSocketHandler
-import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResourcesUtils
@@ -10,7 +11,6 @@ import cn.skstudio.local.utils.ResponseDataUtils
 import cn.skstudio.local.utils.UserChecker
 import cn.skstudio.pojo.*
 import cn.skstudio.utils.Network
-import cn.skstudio.utils.PasswordCoder
 import cn.skstudio.utils.StringExtend.similar
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 
-@RequestMapping("/api/user")
+@JsonRequestMapping("/api/user")
 @RestController
 class UserController {
 
@@ -34,7 +34,7 @@ class UserController {
     //登录
     @RequestLimit(60, 10)
     @RequestMapping(value = ["/login"])
-    fun login(request: HttpServletRequest): String {
+    fun login(request: HttpServletRequest): ResponseDataInterface {
         val session = request.session
         val user = UserChecker.check(request)
         val updateUser = User.readyToUpdate(user)
@@ -46,47 +46,47 @@ class UserController {
         user.applyUpdate(updateUser)
         session.setAttribute("user", user)
         session.maxInactiveInterval = 60 * 60
-        return ResponseDataUtils.successData(user)
+        return ResponseDataUtils.ok(user)
     }
 
     //登出
     @RequestMapping(value = ["/logout"])
-    fun logout(request: HttpServletRequest): String {
+    fun logout(request: HttpServletRequest): ResponseDataInterface {
         request.session.invalidate()
-        return ResponseDataUtils.OK()
+        return ResponseDataUtils.ok()
     }
 
     //登录状态
     @RequestMapping(value = ["/relogin"])
-    fun relogin(session: HttpSession): String {
-        return ResponseDataUtils.successData(session.getAttribute("user"))
+    fun relogin(session: HttpSession): ResponseDataInterface {
+        return ResponseDataUtils.ok(session.getAttribute("user"))
     }
 
     //endregion
 
     //在线人数
     @RequestMapping(value = ["/onlineCount"])
-    fun onlineCount(): String {
-        return ResponseDataUtils.successData(WebSocketHandler.onlineCount)
+    fun onlineCount(): ResponseDataInterface {
+        return ResponseDataUtils.ok(WebSocketHandler.onlineCount)
     }
 
     //是否为管理员
     @RequestMapping(value = ["/isAdmin"])
-    fun isAdmin(session: HttpSession): String {
-        return ResponseDataUtils.successData(session.getAttribute("admin"))
+    fun isAdmin(session: HttpSession): ResponseDataInterface {
+        return ResponseDataUtils.ok(session.getAttribute("admin"))
     }
 
     //获取用户信息
     @RequestMapping(value = ["/get/id/{id}"])
-    fun getUserInfo(@PathVariable id: Long): String {
+    fun getUserInfo(@PathVariable id: Long): ResponseDataInterface {
         val user: User = LocalConfig.userService.getUserByID(id)
                 ?: ServiceErrorEnum.USER_ID_NOT_EXIST.throwout()
-        return ResponseDataUtils.successData(GuestUser.getInstance(user))
+        return ResponseDataUtils.ok(GuestUser.getInstance(user))
     }
 
     //消息处理接口
     @RequestMapping(value = ["/message/{type}/{typeInfo}"])
-    fun message(@PathVariable type: String, request: HttpServletRequest, @PathVariable typeInfo: String): String {
+    fun message(@PathVariable type: String, request: HttpServletRequest, @PathVariable typeInfo: String): ResponseDataInterface {
         val user = request.session.getAttribute("user") as User
         return when (type) {
             //获取消息
@@ -97,11 +97,11 @@ class UserController {
                                 ?: ArrayList()
                         logger.info(messages)
                         logger.info(JSON.toJSONString(messages))
-                        ResponseDataUtils.successData(messages)
+                        ResponseDataUtils.ok(messages)
                     }
                     //TODO 历史消息
                     "" -> {
-                        ""
+                        ResponseDataUtils.ok()
                     }
                     else -> {
                         ServiceErrorEnum.UNKNOWN_REQUEST.data(typeInfo).throwout()
@@ -119,7 +119,7 @@ class UserController {
                 if (LocalConfig.actionMessageService.read(message) == null) {
                     ServiceErrorEnum.IO_EXCEPTION.throwout()
                 }
-                ResponseDataUtils.successData(message.messageID)
+                ResponseDataUtils.ok(message.messageID)
             }
             else -> {
                 ServiceErrorEnum.UNKNOWN_REQUEST.data(type).throwout()
@@ -129,7 +129,7 @@ class UserController {
 
 
     @RequestMapping(value = ["/get/resource/{type}/{id}"])
-    fun getResource(@PathVariable type: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): String {
+    fun getResource(@PathVariable type: String, @PathVariable id: Long, request: HttpServletRequest, response: HttpServletResponse): ResponseDataInterface {
         return when (type) {
 //            "Avatar" -> {
 //                if (!ResourcesUtils.resourceExists(ResourcesUtils.ResourceType.Avatar, id.toString())) {
@@ -147,19 +147,19 @@ class UserController {
 
 
     @RequestMapping(value = ["/get/list/{type}"])
-    fun getList(@PathVariable type: String, request: HttpServletRequest): String {
+    fun getList(@PathVariable type: String, request: HttpServletRequest): ResponseDataInterface {
         val user: User = request.session.getAttribute("user") as User
         return when (type) {
             //获取好友分组列表
             "group" -> {
                 val friendGroupList = LocalConfig.friendGroupService.getUserGroup(user.userID)
                         ?: arrayOf(Group.newDefaultGroup(user.userID))
-                ResponseDataUtils.successData(friendGroupList)
+                ResponseDataUtils.ok(friendGroupList)
             }
             //获取好友列表
             "friend" -> {
                 val friendList = LocalConfig.friendService.getFriendList(user.userID) ?: ArrayList()
-                ResponseDataUtils.successData(friendList)
+                ResponseDataUtils.ok(friendList)
             }
             //未知的请求
             else -> {
@@ -170,7 +170,7 @@ class UserController {
 
 
     @RequestMapping(value = ["/search"])
-    fun search(request: HttpServletRequest): String {
+    fun search(request: HttpServletRequest): ResponseDataInterface {
         val self = request.session.getAttribute("user") as User
         val data = request.getParameter("data")
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.throwout()
@@ -188,11 +188,11 @@ class UserController {
             }
         }
         logger.info(dataList)
-        return ResponseDataUtils.successData(dataList)
+        return ResponseDataUtils.ok(dataList)
     }
 
     @RequestMapping(value = ["/friend/{type}"])
-    fun friend(@PathVariable type: String, request: HttpServletRequest): String {
+    fun friend(@PathVariable type: String, request: HttpServletRequest): ResponseDataInterface {
         val user = request.session.getAttribute("user") as User
         val targetID = request.getParameter("targetID")?.toLongOrNull()
                 ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("targetID").throwout()
@@ -214,13 +214,13 @@ class UserController {
                 val message = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, user.userID, targetID, null, content)
                 LocalConfig.actionMessageService.newActionMessage(message)
                         ?: ServiceErrorEnum.IO_EXCEPTION.data("Create request message").throwout()
-                ResponseDataUtils.successData(targetID)
+                ResponseDataUtils.ok(targetID)
             }
             //删除好友
             "delete" -> {
                 LocalConfig.friendService.deleteFriend(user.userID, targetID)
                         ?: ServiceErrorEnum.IO_EXCEPTION.data("deleteFriend").throwout()
-                ResponseDataUtils.OK()
+                ResponseDataUtils.ok()
             }
             //同意添加好友
             "accept" -> {
@@ -254,7 +254,7 @@ class UserController {
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("Create response message").throwout()
                     //尝试立即发送回执消息(若在线)
                     WebSocketHandler.trySendMessage(responseMessage)
-                    ResponseDataUtils.successData(Friend(message.fromID, friendGroupID))
+                    ResponseDataUtils.ok(Friend(message.fromID, friendGroupID))
                 }
             }
             //拒绝添加好友
@@ -276,7 +276,7 @@ class UserController {
                     LocalConfig.actionMessageService.newActionMessage(responseMessage)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("Create response message").throwout()
                     WebSocketHandler.trySendMessage(responseMessage)
-                    ResponseDataUtils.OK()
+                    ResponseDataUtils.ok()
                 }
             }
             //忽略添加请求
@@ -284,13 +284,13 @@ class UserController {
                 val messageID = request.getParameter("messageID")?.toLongOrNull()
                         ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID").throwout()
                 val message = LocalConfig.actionMessageService[messageID]
-                        ?: return ResponseDataUtils.Error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
+                        ?: return ResponseDataUtils.error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
                 if (!message.ownerVerify(user.userID)) {
                     ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID).throwout()
                 } else {
                     LocalConfig.actionMessageService.read(messageID)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("readMessage").throwout()
-                    ResponseDataUtils.OK()
+                    ResponseDataUtils.ok()
                 }
             }
             //未知请求
@@ -302,7 +302,7 @@ class UserController {
 
 
     @RequestMapping(value = ["/update"])
-    fun update(request: HttpServletRequest): String {
+    fun update(request: HttpServletRequest): ResponseDataInterface {
         val user: User = request.session.getAttribute("user") as User
         val updateUser = user.readyToUpdate()
         var edited = false
@@ -345,16 +345,16 @@ class UserController {
             updateUser[User.UpdateUser.PRIVATESEX_FIELD] = it
         }
         if (!edited) {
-            return ResponseDataUtils.successData(user)
+            return ResponseDataUtils.ok(user)
         }
         LocalConfig.userService.updateUser(updateUser)
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
         user.applyUpdate(updateUser)
-        return ResponseDataUtils.successData(user)
+        return ResponseDataUtils.ok(user)
     }
 
     @RequestMapping(value = ["/update/avatar"])
-    fun updateAvatar(request: HttpServletRequest): String {
+    fun updateAvatar(request: HttpServletRequest): ResponseDataInterface {
         val user: User = request.session.getAttribute("user") as User
         if (request !is MultipartHttpServletRequest) {
             ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
@@ -392,7 +392,7 @@ class UserController {
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
         val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, fileName).toBase64()
         user.avatar = base64Data
-        return ResponseDataUtils.OK(base64Data)
+        return ResponseDataUtils.ok(base64Data)
     }
 
 
