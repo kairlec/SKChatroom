@@ -6,6 +6,7 @@ import cn.skstudio.annotation.JsonRequestMapping
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.ResponseDataUtils.responseOK
 import cn.skstudio.pojo.MailSender
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -28,7 +29,7 @@ class AdminController {
             "mailSender" -> {
                 val mailSender = LocalConfig.mailSenderService.getMailSender()
                         ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
-                ResponseDataUtils.ok(mailSender)
+                mailSender.responseOK
             }
             else -> {
                 ServiceErrorEnum.UNKNOWN_REQUEST.throwout()
@@ -72,7 +73,7 @@ class AdminController {
         val mailSender = MailSender(port, host, protocol, encoding, username, password, enable)
         LocalConfig.mailSenderService.updateMailSender(mailSender)
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
-        return ResponseDataUtils.ok(mailSender)
+        return mailSender.responseOK
     }
 
     companion object {

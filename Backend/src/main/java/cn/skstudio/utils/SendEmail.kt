@@ -2,8 +2,9 @@ package cn.skstudio.utils
 
 import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
+import cn.skstudio.local.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig.Companion.toJSON
 import cn.skstudio.pojo.User
-import com.alibaba.fastjson.JSON
 import org.apache.logging.log4j.LogManager
 import org.springframework.mail.javamail.MimeMessageHelper
 import java.io.UnsupportedEncodingException
@@ -80,7 +81,7 @@ object SendEmail {
         calendar.timeInMillis
         val activatedInfo = ActivatedInfo(user.username, user.password, user.email, calendar.timeInMillis)
         logger.info(activatedInfo.toString())
-        val url: String = domain + "?" + RSACoder.encryptByPublicKeyToString(activatedInfo.toString(), StartupConfig.publicKey)
+        val url: String = domain + "?" + RSACoder.encryptByPublicKeyToString(String.toJSON(activatedInfo), StartupConfig.publicKey)
         sendHtmlEmail("[SKChatroom]帐号注册激活", "SKChatroom", HtmlFormatBefore + url + HtmlFormatAfter, user.email)
     }
 
@@ -101,8 +102,5 @@ object SendEmail {
         lateinit var pW: String
         lateinit var eM: String
         var eT: Long = 0
-        override fun toString(): String {
-            return JSON.toJSONString(this)
-        }
     }
 }

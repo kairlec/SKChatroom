@@ -1,41 +1,28 @@
 package cn.skstudio.local.utils
 
-import cn.skstudio.`interface`.ResponseDataInterface
 import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
-import cn.skstudio.pojo.SKImage
-import java.io.IOException
-import javax.servlet.http.HttpServletResponse
+import org.apache.logging.log4j.LogManager
 
 
 object ResponseDataUtils {
-    fun fromException(e: Exception): ServiceErrorEnum {
-        return ServiceErrorEnum.fromException(e)
-    }
+    private val logger = LogManager.getLogger(ResponseDataUtils::class.java)
 
-    fun ok(dataObject: Any? = null): ResponseDataInterface {
-        return ServiceErrorEnum.NO_ERROR.data(dataObject)
-    }
+    val Any?.responseOK
+        get() = ServiceErrorEnum.NO_ERROR.data(this)
 
-    fun error(e: Exception): ResponseDataInterface {
-        if(e is SKException){
-            e.getServiceError()?.let{
-                return error(it)
+    val Exception.responseError: ServiceErrorEnum
+        get() {
+            this.printStackTrace()
+            if (this is SKException) {
+                logger.error("a SKExplorer has throwout:${this.message}")
+                this.getServiceErrorEnum()?.let {
+                    logger.error("${it.msg} with data ${it.data}")
+                    return it
+                }
             }
+            logger.error("a Exception has throwout:${this.message}")
+            return ServiceErrorEnum.fromException(this)
         }
-        return fromException(e)
-    }
 
-    fun error(serviceErrorEnum: ServiceErrorEnum): ResponseDataInterface {
-        return serviceErrorEnum
-    }
-
-    fun writeResponseImage(response: HttpServletResponse, image: SKImage) {
-        response.contentType = image.contentType
-        try {
-            response.outputStream.use { outputStream -> image.write(outputStream) }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
 }

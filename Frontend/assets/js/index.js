@@ -49,7 +49,7 @@ var ChatBoxMap = {
   /**
    * @description 向指定窗口发送消息
    * @param {String} userID 用户的ID,以此来确定窗口对象
-   * @param {Obejct} message 消息体,必须是ActionMessage消息体
+   * @param {Object} message 消息体,必须是ActionMessage消息体
    */
   sendMessage: function (userID, message) {
     console.log(message)

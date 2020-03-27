@@ -6,6 +6,7 @@ import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.ResponseDataUtils.responseOK
 import cn.skstudio.pojo.Group
 import cn.skstudio.pojo.User
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,7 +22,7 @@ import javax.servlet.http.HttpSession
  */
 
 @RestController
-@JsonRequestMapping("/api/group")
+@JsonRequestMapping(value=["/api/group"])
 class GroupController {
 
 
@@ -38,7 +39,7 @@ class GroupController {
         if (LocalConfig.friendGroupService.deleteGroup(groupID) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.ok(groupID)
+            return groupID.responseOK
         }
     }
 
@@ -53,7 +54,7 @@ class GroupController {
         if (LocalConfig.friendGroupService.addGroup(group) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.ok(group)
+            return group.responseOK
         }
     }
 
@@ -78,7 +79,7 @@ class GroupController {
         if (LocalConfig.friendGroupService.updateGroup(group) == null) {
             ServiceErrorEnum.IO_EXCEPTION.throwout()
         } else {
-            return ResponseDataUtils.ok(group)
+            return group.responseOK
         }
     }
 

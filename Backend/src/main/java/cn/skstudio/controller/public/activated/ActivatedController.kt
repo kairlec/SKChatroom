@@ -12,12 +12,13 @@ import cn.skstudio.config.database.EditableConfig
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig.Companion.json2Object
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.ResponseDataUtils.responseOK
 import cn.skstudio.pojo.User
 import cn.skstudio.utils.PasswordCoder
 import cn.skstudio.utils.RSACoder
 import cn.skstudio.utils.SendEmail
-import com.alibaba.fastjson.JSON
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.web.bind.annotation.RequestMapping
@@ -28,7 +29,7 @@ import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-@JsonRequestMapping("/api/public/register")
+@JsonRequestMapping(value=["/api/public/register"])
 @RestController
 class ActivatedController {
     companion object {
@@ -56,10 +57,8 @@ class ActivatedController {
         val activatedInfo: SendEmail.ActivatedInfo?
         try {
             //将激活码用私钥解密并反序列化
-            activatedInfo = JSON.parseObject(RSACoder.decryptByPrivateKeyToString(activateCode, StartupConfig.privateKey), SendEmail.ActivatedInfo::class.java)
-            if (activatedInfo == null) {
-                ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()
-            }
+            activatedInfo = RSACoder.decryptByPrivateKeyToString(activateCode, StartupConfig.privateKey).json2Object<SendEmail.ActivatedInfo>()
+                    ?: ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()
         } catch (e: Exception) {
             ServiceErrorEnum.ACTIVATE_TOKEN_INVALID.throwout()
         }
@@ -84,7 +83,7 @@ class ActivatedController {
         user.applyUpdate(updateUser)
         LocalConfig.userService.insertUser(user)
                 ?: ServiceErrorEnum.ACTIVATE_UNKNOWN_EXCEPTION.throwout()
-        return ResponseDataUtils.ok()
+        return null.responseOK
     }
 
     @RequestLimit(60, 3)
@@ -124,7 +123,7 @@ class ActivatedController {
             thread.start()
             logger.info("邮箱发送线程已启动")
             //返回数据为需要验证
-            ResponseDataUtils.ok("VERIFICATION_REQUIRED")
+            "VERIFICATION_REQUIRED".responseOK
         } else {
             user.userID = User.getNewID()
             val finalUpdateUser = user.readyToUpdate()
@@ -133,7 +132,7 @@ class ActivatedController {
             user.applyUpdate(finalUpdateUser)
             LocalConfig.userService.insertUser(user) ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
             //返回数据为无需验证
-            ResponseDataUtils.ok("NO_VERIFICATION_REQUIRED")
+            "NO_VERIFICATION_REQUIRED".responseOK
         }
     }
 }

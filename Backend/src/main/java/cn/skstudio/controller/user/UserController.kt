@@ -6,14 +6,18 @@ import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.controller.websocket.WebSocketHandler
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig.Companion.toJSON
+import cn.skstudio.local.utils.LocalConfig.Companion.toJsonNode
+import cn.skstudio.local.utils.LocalConfig.Companion.toObjectNode
 import cn.skstudio.local.utils.ResourcesUtils
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.ResponseDataUtils.responseOK
 import cn.skstudio.local.utils.UserChecker
 import cn.skstudio.pojo.*
-import cn.skstudio.utils.Network
+import cn.skstudio.utils.IP
+import cn.skstudio.utils.set
 import cn.skstudio.utils.StringExtend.similar
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONObject
+import cn.skstudio.utils.asLongOrNull
 import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.LogManager
 import org.springframework.web.bind.annotation.PathVariable
@@ -24,12 +28,11 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 
-@JsonRequestMapping("/api/user")
+@JsonRequestMapping(value = ["/api/user"])
 @RestController
 class UserController {
 
     //region 登录相关方法
-
 
     //登录
     @RequestLimit(60, 10)
@@ -39,27 +42,27 @@ class UserController {
         val user = UserChecker.check(request)
         val updateUser = User.readyToUpdate(user)
         updateUser[User.UpdateUser.LASTSESSIONID_FIELD] = session.id
-        updateUser[User.UpdateUser.IP_FIELD] = Network.getIpAddress(request)
+        updateUser[User.UpdateUser.IP_FIELD] = request.IP
         if (LocalConfig.userService.updateLoginInfo(updateUser) == null) {
             logger.warn("Update user login info failed")
         }
         user.applyUpdate(updateUser)
         session.setAttribute("user", user)
         session.maxInactiveInterval = 60 * 60
-        return ResponseDataUtils.ok(user)
+        return user.responseOK
     }
 
     //登出
     @RequestMapping(value = ["/logout"])
     fun logout(request: HttpServletRequest): ResponseDataInterface {
         request.session.invalidate()
-        return ResponseDataUtils.ok()
+        return null.responseOK
     }
 
     //登录状态
     @RequestMapping(value = ["/relogin"])
     fun relogin(session: HttpSession): ResponseDataInterface {
-        return ResponseDataUtils.ok(session.getAttribute("user"))
+        return session.getAttribute("user").responseOK
     }
 
     //endregion
@@ -67,13 +70,13 @@ class UserController {
     //在线人数
     @RequestMapping(value = ["/onlineCount"])
     fun onlineCount(): ResponseDataInterface {
-        return ResponseDataUtils.ok(WebSocketHandler.onlineCount)
+        return WebSocketHandler.onlineCount.responseOK
     }
 
     //是否为管理员
     @RequestMapping(value = ["/isAdmin"])
     fun isAdmin(session: HttpSession): ResponseDataInterface {
-        return ResponseDataUtils.ok(session.getAttribute("admin"))
+        return session.getAttribute("admin").responseOK
     }
 
     //获取用户信息
@@ -81,7 +84,7 @@ class UserController {
     fun getUserInfo(@PathVariable id: Long): ResponseDataInterface {
         val user: User = LocalConfig.userService.getUserByID(id)
                 ?: ServiceErrorEnum.USER_ID_NOT_EXIST.throwout()
-        return ResponseDataUtils.ok(GuestUser.getInstance(user))
+        return GuestUser.getInstance(user).responseOK
     }
 
     //消息处理接口
@@ -96,12 +99,11 @@ class UserController {
                         val messages = LocalConfig.actionMessageService.getAllUnreadToActionMessages(user.userID)
                                 ?: ArrayList()
                         logger.info(messages)
-                        logger.info(JSON.toJSONString(messages))
-                        ResponseDataUtils.ok(messages)
+                        messages.responseOK
                     }
                     //TODO 历史消息
                     "" -> {
-                        ResponseDataUtils.ok()
+                        null.responseOK
                     }
                     else -> {
                         ServiceErrorEnum.UNKNOWN_REQUEST.data(typeInfo).throwout()
@@ -119,7 +121,7 @@ class UserController {
                 if (LocalConfig.actionMessageService.read(message) == null) {
                     ServiceErrorEnum.IO_EXCEPTION.throwout()
                 }
-                ResponseDataUtils.ok(message.messageID)
+                message.messageID.responseOK
             }
             else -> {
                 ServiceErrorEnum.UNKNOWN_REQUEST.data(type).throwout()
@@ -154,12 +156,12 @@ class UserController {
             "group" -> {
                 val friendGroupList = LocalConfig.friendGroupService.getUserGroup(user.userID)
                         ?: arrayOf(Group.newDefaultGroup(user.userID))
-                ResponseDataUtils.ok(friendGroupList)
+                friendGroupList.responseOK
             }
             //获取好友列表
             "friend" -> {
                 val friendList = LocalConfig.friendService.getFriendList(user.userID) ?: ArrayList()
-                ResponseDataUtils.ok(friendList)
+                friendList.responseOK
             }
             //未知的请求
             else -> {
@@ -188,7 +190,7 @@ class UserController {
             }
         }
         logger.info(dataList)
-        return ResponseDataUtils.ok(dataList)
+        return dataList.responseOK
     }
 
     @RequestMapping(value = ["/friend/{type}"])
@@ -202,25 +204,25 @@ class UserController {
                 var content = request.getParameter("content")
                         ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("content").throwout()
                 try {
-                    val json = JSON.parseObject(content)
+                    val json = content.toObjectNode()
                             ?: ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data(content).throwout()
-                    json.getObject("groupID", Long::class.java)
-                            ?: ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("No groupID").throwout()
+                    json["groupID"].asLongOrNull()
+                            ?: ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("No groupID or error format").throwout()
                     json["type"] = "REQUEST"
-                    content = json.toJSONString()
+                    content = String.toJSON(json)
                 } catch (e: Exception) {
                     ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("parse json object").throwout()
                 }
                 val message = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, user.userID, targetID, null, content)
                 LocalConfig.actionMessageService.newActionMessage(message)
                         ?: ServiceErrorEnum.IO_EXCEPTION.data("Create request message").throwout()
-                ResponseDataUtils.ok(targetID)
+                targetID.responseOK
             }
             //删除好友
             "delete" -> {
                 LocalConfig.friendService.deleteFriend(user.userID, targetID)
                         ?: ServiceErrorEnum.IO_EXCEPTION.data("deleteFriend").throwout()
-                ResponseDataUtils.ok()
+                null.responseOK
             }
             //同意添加好友
             "accept" -> {
@@ -236,7 +238,7 @@ class UserController {
                     ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID).throwout()
                 } else {
                     //获取被添加人在添加人中的分组
-                    val userGroupID = JSON.parseObject(message.context)?.getObject("groupID", Long::class.java)
+                    val userGroupID = message.context.toJsonNode()?.get("groupID")?.asLong()
                             ?: ServiceErrorEnum.MESSAGE_WRONG_FORMAT.data("groupID").throwout()
                     //写入好友数据表列表
                     LocalConfig.friendService.addFriend(message.fromID, message.toID, userGroupID, friendGroupID)
@@ -245,16 +247,17 @@ class UserController {
                     LocalConfig.actionMessageService.read(messageID)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("readMessage").throwout()
                     //创造回执消息
-                    val content = JSONObject()
-                    content["type"] = "RESPONSE"
-                    content["requestID"] = messageID
-                    content["result"] = "ACCEPT"
-                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content.toJSONString())
+                    val content = String.toJSON(object {
+                        val type = "RESPONSE"
+                        val requestID = messageID
+                        val result = "ACCEPT"
+                    })
+                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content)
                     LocalConfig.actionMessageService.newActionMessage(responseMessage)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("Create response message").throwout()
                     //尝试立即发送回执消息(若在线)
                     WebSocketHandler.trySendMessage(responseMessage)
-                    ResponseDataUtils.ok(Friend(message.fromID, friendGroupID))
+                    Friend(message.fromID, friendGroupID).responseOK
                 }
             }
             //拒绝添加好友
@@ -268,15 +271,16 @@ class UserController {
                 } else {
                     LocalConfig.actionMessageService.read(messageID)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("readMessage").throwout()
-                    val content = JSONObject()
-                    content["type"] = "RESPONSE"
-                    content["requestID"] = messageID
-                    content["result"] = "REFUSE"
-                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content.toJSONString())
+                    val content = String.toJSON(object {
+                        val type = "RESPONSE"
+                        val requestID = messageID
+                        val result = "REFUSE"
+                    })
+                    val responseMessage = ActionMessage.create(ActionTypeEnum.ADD_FRIEND_REQUEST, message.toID, message.fromID, null, content)
                     LocalConfig.actionMessageService.newActionMessage(responseMessage)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("Create response message").throwout()
                     WebSocketHandler.trySendMessage(responseMessage)
-                    ResponseDataUtils.ok()
+                    null.responseOK
                 }
             }
             //忽略添加请求
@@ -284,13 +288,13 @@ class UserController {
                 val messageID = request.getParameter("messageID")?.toLongOrNull()
                         ?: ServiceErrorEnum.INSUFFICIENT_PARAMETERS.data("messageID").throwout()
                 val message = LocalConfig.actionMessageService[messageID]
-                        ?: return ResponseDataUtils.error(ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID))
+                        ?: ServiceErrorEnum.MESSAGE_NOT_EXIST.data(messageID).throwout()
                 if (!message.ownerVerify(user.userID)) {
                     ServiceErrorEnum.MESSAGE_NOT_ALLOWED.data(messageID).throwout()
                 } else {
                     LocalConfig.actionMessageService.read(messageID)
                             ?: ServiceErrorEnum.IO_EXCEPTION.data("readMessage").throwout()
-                    ResponseDataUtils.ok()
+                    null.responseOK
                 }
             }
             //未知请求
@@ -345,12 +349,12 @@ class UserController {
             updateUser[User.UpdateUser.PRIVATESEX_FIELD] = it
         }
         if (!edited) {
-            return ResponseDataUtils.ok(user)
+            return user.responseOK
         }
         LocalConfig.userService.updateUser(updateUser)
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
         user.applyUpdate(updateUser)
-        return ResponseDataUtils.ok(user)
+        return user.responseOK
     }
 
     @RequestMapping(value = ["/update/avatar"])
@@ -392,7 +396,7 @@ class UserController {
                 ?: ServiceErrorEnum.IO_EXCEPTION.throwout()
         val base64Data = ResourcesUtils.getImageResource(ResourcesUtils.ResourceType.Avatar, fileName).toBase64()
         user.avatar = base64Data
-        return ResponseDataUtils.ok(base64Data)
+        return base64Data.responseOK
     }
 
 

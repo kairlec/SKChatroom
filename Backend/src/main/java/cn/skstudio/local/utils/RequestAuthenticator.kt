@@ -29,7 +29,6 @@ object RequestAuthenticator {
             }
         }
         return ServiceErrorEnum.NOT_LOGGED_IN
-
     }
 
     fun authHttpServletRequest(request: HttpServletRequest, blackAPIList: Array<String>): ServiceErrorEnum {

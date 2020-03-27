@@ -10,12 +10,7 @@ enum class ActionTypeEnum(private val typeCode: Int) {
 
     companion object {
         fun parse(typeCode: Int): ActionTypeEnum? {
-            for (action in ActionTypeEnum.values()) {
-                if (action.typeCode == typeCode) {
-                    return action
-                }
-            }
-            return null
+            return values().find { it.typeCode == typeCode }
         }
     }
 }

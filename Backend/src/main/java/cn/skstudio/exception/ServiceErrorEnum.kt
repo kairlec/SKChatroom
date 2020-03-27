@@ -1,13 +1,12 @@
 package cn.skstudio.exception
 
 import cn.skstudio.`interface`.ResponseDataInterface
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.annotation.JSONType
-import com.alibaba.fastjson.serializer.SerializerFeature
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 
-@JSONType(serializeEnumAsJavaBean = true)
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 enum class ServiceErrorEnum(override val code: Int, override val msg: String, override var data: Any?=null) : ResponseDataInterface {
 
     //无异常
@@ -109,17 +108,13 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
         return this
     }
 
-    fun ok(): Boolean {
-        return code == 0
-    }
+    @JsonIgnore
+    val ok = code == 0
 
-    override fun toString(): String {
-        return JSON.toJSONString(this, SerializerFeature.WriteMapNullValue)
-    }
+    @JsonIgnore
+    val bad = code != 0
 
-    fun throwout():Nothing{
-        throw SKException(this)
-    }
+    fun throwout(): Nothing = throwout(this)
 
     companion object {
         fun throwout(error: ServiceErrorEnum):Nothing{

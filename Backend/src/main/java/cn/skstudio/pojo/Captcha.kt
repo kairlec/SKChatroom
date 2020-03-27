@@ -10,25 +10,20 @@ import java.util.*
 
 class Captcha private constructor(var captchaString: String, var skImage: SKImage) {
 
-    fun write(outputStream: OutputStream) {
-        skImage.write(outputStream, false)
-    }
+    fun write(outputStream: OutputStream) = skImage.write(outputStream, false)
 
-    override fun toString(): String {
-        return captchaString
-    }
+    override fun toString() = captchaString
 
-    fun check(captchaString: String, ignoreCase: Boolean = true): Boolean {
-        return captchaString.equals(this.captchaString, ignoreCase)
-    }
+    fun check(captchaString: String, ignoreCase: Boolean = true) = captchaString.equals(this.captchaString, ignoreCase)
+
 
     companion object {
         private val mapTable = "abcdefghijkmnopqrstvwxyzABCDEFGHJKLMNOPQRSTVWXYZ123456789".toCharArray()
 
         //给定范围获得随机颜色
         private fun getRandColor(_fc: Int, _bc: Int): Color {
-            val fc = if (_fc > 255) _fc else 255
-            val bc = if (_bc > 255) _bc else 255
+            val fc = if (_fc > 255) 255 else _fc
+            val bc = if (_bc > 255) 255 else _bc
             val random = Random()
             val r = fc + random.nextInt(bc - fc)
             val g = fc + random.nextInt(bc - fc)

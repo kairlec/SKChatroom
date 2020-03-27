@@ -5,15 +5,15 @@ import cn.skstudio.controller.public.activated.ActivatedController.Companion.log
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.Captcha
 import cn.skstudio.pojo.User
-import cn.skstudio.utils.Network.getIpAddress
 import cn.skstudio.utils.PasswordCoder.fromRequest
+import cn.skstudio.utils.IP
 import javax.servlet.http.HttpServletRequest
 
 object UserChecker {
     fun check(request: HttpServletRequest): User {
         val username = request.getParameter("username")
         var password = request.getParameter("password")
-        val ip = getIpAddress(request)
+        val ip = request.IP
 
         val session = request.getSession(true)
         if (session.getAttribute("user") != null) {

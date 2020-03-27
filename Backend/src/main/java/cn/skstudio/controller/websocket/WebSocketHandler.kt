@@ -2,11 +2,14 @@ package cn.skstudio.controller.websocket
 
 import cn.skstudio.config.static.StaticConfig
 import cn.skstudio.local.utils.LocalConfig
+import cn.skstudio.local.utils.LocalConfig.Companion.toJSON
 import cn.skstudio.pojo.ActionMessage
 import cn.skstudio.pojo.ActionTypeEnum
 import cn.skstudio.pojo.User
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONObject
+import cn.skstudio.utils.asIntOrNull
+import cn.skstudio.utils.asLongOrNull
+import cn.skstudio.utils.asTextOrNull
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Controller
 import org.springframework.web.socket.CloseStatus
@@ -69,7 +72,7 @@ class WebSocketHandler : TextWebSocketHandler() {
             return if (isOnline(message.toID)) {
                 logger.info("${message.toID} is online")
                 return try {
-                    webSocketMap[message.toID]!!.sendMessage(warpData(JSON.toJSONString(message),"Message"))
+                    webSocketMap[message.toID]!!.sendMessage(warpData(String.toJSON(message), "Message"))
                     true
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -82,20 +85,20 @@ class WebSocketHandler : TextWebSocketHandler() {
         }
 
         private fun warpData(data: Any?, type: String): TextMessage {
-            val webSocketMessageObject = JSONObject()
-            webSocketMessageObject["type"] = type
-            webSocketMessageObject["data"] = data
-            return TextMessage(JSON.toJSONString(webSocketMessageObject))
+            return TextMessage(String.toJSON(object {
+                val type = type
+                val data = data
+            }))
         }
 
         private fun badMessage(reason: String, timestamp: String): TextMessage {
-            val webSocketMessageObject = JSONObject()
-            webSocketMessageObject["type"] = "Response"
-            webSocketMessageObject["status"] = true
-            webSocketMessageObject["timestamp"] = timestamp
-            webSocketMessageObject["data"] = reason
             logger.debug("a bad message:${reason}")
-            return TextMessage(JSON.toJSONString(webSocketMessageObject))
+            return TextMessage(String.toJSON(object {
+                val type = "Response"
+                val status = true
+                val timestamp = timestamp
+                val data = reason
+            }))
         }
 
         fun sendMessageToAll(message: ActionMessage) {
@@ -105,18 +108,18 @@ class WebSocketHandler : TextWebSocketHandler() {
             }
         }
 
-        private fun parseReceiveMessage(textMessage: String, senderSession: WebSocketSession):String {
-            val rawJson = JSON.parseObject(textMessage)
-            when (rawJson["type"]) {
+        private fun parseReceiveMessage(textMessage: String, senderSession: WebSocketSession): String {
+            val rawJson = ObjectMapper().readTree(textMessage) ?: return "无法解析"
+            when (rawJson["type"].asText()) {
                 "HeartBeat" -> {
                     senderSession.sendMessage(warpData(null, "HeartBeat"))
                     return "心跳包"
                 }
                 "Message" -> {
-                    val json = rawJson["data"] as? JSONObject ?: return "无数据"
+                    val json = rawJson["data"] ?: return "无数据"
                     logger.info(json)
-                    val timestamp = json["timestamp"] as? String ?: return "无时间戳"
-                    val type = json["typeCode"] as? Int
+                    val timestamp = json["timestamp"].asTextOrNull() ?: return "无时间戳"
+                    val type = json["typeCode"].asIntOrNull()
                     if (type == null) {
                         senderSession.sendMessage(badMessage("类型为空", timestamp))
                         return "类型为空"
@@ -127,19 +130,13 @@ class WebSocketHandler : TextWebSocketHandler() {
                         return "未知类型"
                     }
                     val toID: Long?
-                    try {
-                        toID = (json["toID"] as? String)?.toLong()
-                        if (toID == null) {
-                            senderSession.sendMessage(badMessage("无对象ID", timestamp))
-                            return "无对象ID"
-                        }
-                    } catch (e: NumberFormatException) {
-                        e.printStackTrace()
-                        senderSession.sendMessage(badMessage("对象ID错误", timestamp))
-                        return "对象ID错误"
+                    toID = json["toID"].asLongOrNull()
+                    if (toID == null) {
+                        senderSession.sendMessage(badMessage("无对象ID或对象ID错误", timestamp))
+                        return "无对象ID"
                     }
                     val fromID = (senderSession.attributes["user"] as User).userID
-                    val content = json["content"]?.toString()
+                    val content = json["content"].asTextOrNull()
                     if (content == null) {
                         senderSession.sendMessage(badMessage("无消息体", timestamp))
                         return "无消息体"
@@ -150,7 +147,7 @@ class WebSocketHandler : TextWebSocketHandler() {
                     }
                     return "成功"
                 }
-                else->{
+                else -> {
                     return "其他消息"
                 }
             }

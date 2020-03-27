@@ -25,6 +25,6 @@ class NotFoundExceptionHandler : ErrorController {
     @RequestMapping(value = ["/error"])
     @ResponseBody
     fun error(request: HttpServletRequest): ResponseDataInterface {
-        return ResponseDataUtils.error(ServiceErrorEnum.UNKNOWN_REQUEST.data(request.requestURI))
+        return ServiceErrorEnum.UNKNOWN_REQUEST.data(request.requestURI)
     }
 }

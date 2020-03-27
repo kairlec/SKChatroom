@@ -15,14 +15,13 @@ object ResourcesUtils {
 
     private val resourceRootPath = Path.of("Resources")
 
-    fun getResourcePath(resourceType: ResourceType, resourceName: String): Path {
-        return Path.of(resourceRootPath.toAbsolutePath().toString(), "${resourceType.name}${File.separator}$resourceName")
-    }
+    fun getResourcePath(resourceType: ResourceType, resourceName: String)=Path.of(resourceRootPath.toAbsolutePath().toString(), "${resourceType.name}${File.separator}$resourceName")
+
 
     fun saveResource(resourceType: ResourceType, resourceName: String, multipartFile: MultipartFile, overWrite: Boolean = false) {
         val resourcePath = getResourcePath(resourceType, resourceName)
         if (Files.exists(resourcePath) && !overWrite) {
-            throw java.nio.file.FileAlreadyExistsException(resourcePath.toString(), null, "File is already exist and overwrite option is not set of false.")
+            throw FileAlreadyExistsException(resourcePath.toFile(), null, "File is already exist and overwrite option is not set of false.")
         }
         Files.deleteIfExists(resourcePath)
         Files.createDirectories(resourcePath.parent)
@@ -30,13 +29,11 @@ object ResourcesUtils {
         multipartFile.transferTo(resourcePath.toFile())
     }
 
-    fun resourceExists(resourceType: ResourceType, resourceName: String): Boolean {
-        return Files.exists(getResourcePath(resourceType, resourceName))
-    }
+    fun resourceExists(resourceType: ResourceType, resourceName: String)=Files.exists(getResourcePath(resourceType, resourceName))
 
-    fun deleteResource(resourceType: ResourceType, resourceName: String) {
-        Files.deleteIfExists(getResourcePath(resourceType, resourceName))
-    }
+
+    fun deleteResource(resourceType: ResourceType, resourceName: String)=Files.deleteIfExists(getResourcePath(resourceType, resourceName))
+
 
     fun getImageResource(resourceType: ResourceType, resourceName: String): SKImage {
         val resourcePath = getResourcePath(resourceType, resourceName)

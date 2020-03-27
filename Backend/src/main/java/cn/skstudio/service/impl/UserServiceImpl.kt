@@ -53,7 +53,7 @@ class UserServiceImpl : UserService {
                 updateUser[User.UpdateUser.USERNAME_FIELD] = "skadmin"
                 updateUser[User.UpdateUser.PASSWORD_FIELD, true] = "skadmin"
                 updateUser[User.UpdateUser.NICKNAME_FIELD] = "管理员"
-                updateUser[User.UpdateUser.EMAIL_FIELD] = ""
+                updateUser[User.UpdateUser.EMAIL_FIELD] = "admin@admin.admin"
                 userMapper.initializeAdmin(updateUser)
                 friendGroupMapper.addGroup(Group.newDefaultGroup(user.userID))
             } else {

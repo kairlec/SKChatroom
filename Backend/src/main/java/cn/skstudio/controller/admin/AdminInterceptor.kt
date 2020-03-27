@@ -17,11 +17,11 @@ import javax.servlet.http.HttpServletResponse
 class AdminInterceptor : HandlerInterceptor {
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val error = RequestAuthenticator.authHttpServletRequest(request, blackAPIList)
-        return if (error.ok()) {
+        return if (error.ok) {
             //在请求验证器中的成功data会返回用户身份
             "UserAdmin".equals(error.data as String, true)
         } else {
-            response.writer.write(ResponseDataUtils.error(error).toString())
+            response.writer.write(error.json)
             false
         }
     }

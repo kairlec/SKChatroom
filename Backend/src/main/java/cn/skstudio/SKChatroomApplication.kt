@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
-import org.springframework.boot.system.ApplicationHome
 import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.support.PropertiesLoaderUtils
 import org.springframework.web.bind.annotation.RestController
@@ -24,14 +23,13 @@ open class SKChatroomApplication {
     companion object {
         private val logger: Logger = LogManager.getLogger(SKChatroomApplication::class.java)
 
-        private fun init() {
+        private fun beforeInit() {
 
             //加载application.properties
             logger.info("Init ...")
-            val path = ApplicationHome(SKChatroomApplication::class.java).source.parentFile.toString()
-            val aPath = "$path${File.separator}application.properties";
-            logger.info("Path is $aPath")
-            val resource = FileSystemResource(aPath)
+            val path = "${System.getProperty("user.dir")}${File.separator}application.properties";
+            logger.info("Path is $path")
+            val resource = FileSystemResource(path)
             logger.info("Load file system resource completed")
             val properties: Properties = PropertiesLoaderUtils.loadProperties(resource)
             logger.info("Load properties completed")
@@ -48,7 +46,6 @@ open class SKChatroomApplication {
             try {
                 FileOutputStream(resource.file).use {
                     //properties.store 方法会转义:和=,所以这里使用直接保存
-                    //properties.store(it, "new key")
                     val e = properties.propertyNames()
                     while (e.hasMoreElements()) {
                         val key = e.nextElement() as String
@@ -64,22 +61,12 @@ open class SKChatroomApplication {
                 exitProcess(-1)
             }
 
-            //检查是否设置了数据库连接项
-            val databaseUrl = properties.getProperty("spring.datasource.url", "")
-            val databaseUsername = properties.getProperty("spring.datasource.username", "")
-            val databasePassword = properties.getProperty("spring.datasource.password", "")
-            if (databaseUrl.isEmpty() || databaseUsername.isEmpty() || databasePassword.isEmpty()) {
-                logger.fatal("Database login info is not exists , please set \"spring.datasource.url\",\"spring.datasource.username\",\"spring.datasource.password\"")
-                exitProcess(-1)
-            }
-
         }
 
         @JvmStatic
         fun main(args: Array<String>) {
-            init()
-
-            runApplication<SKChatroomApplication>(*args)
+            beforeInit()
+            val configurableEnvironment = runApplication<SKChatroomApplication>(*args)
         }
     }
 

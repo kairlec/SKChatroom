@@ -51,7 +51,7 @@ open class FilterConfig {
             response.setHeader("Cache-Control", "no-cache")
             filterChain.doFilter(servletRequest, servletResponse)
             //最后记录一下这次请求内容和结果
-            logger.log(Level.getLevel("REQUEST"), HTTPInfo(servletRequest, response).toString())
+            logger.log(Level.getLevel("REQUEST"), HTTPInfo(servletRequest, response).json)
         }
 
     }

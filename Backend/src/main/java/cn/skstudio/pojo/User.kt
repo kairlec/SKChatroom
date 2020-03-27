@@ -2,33 +2,19 @@ package cn.skstudio.pojo
 
 import cn.skstudio.annotation.NoArg
 import cn.skstudio.config.static.StaticConfig
-import cn.skstudio.config.web.FilterConfig
 import cn.skstudio.exception.SKException
 import cn.skstudio.exception.ServiceErrorEnum
-import cn.skstudio.fastjson.LongToStringSerializer
 import cn.skstudio.local.utils.LocalConfig
-import cn.skstudio.pojo.json.HTTPInfo
 import cn.skstudio.utils.SendEmail
 import cn.skstudio.utils.SnowFlake
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.annotation.JSONField
-import com.alibaba.fastjson.serializer.SerializerFeature
-import org.apache.logging.log4j.Level
-import org.springframework.core.annotation.Order
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.util.DigestUtils
-import javax.servlet.Filter
-import javax.servlet.FilterChain
-import javax.servlet.ServletRequest
-import javax.servlet.ServletResponse
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 @NoArg
 data class User(
-        @JSONField(serializeUsing = LongToStringSerializer::class)
         var userID: Long,
         var username: String,
-        @JSONField(serialize = false)
+        @JsonIgnore
         var password: String,
         var nickname: String,
         var email: String,
@@ -48,11 +34,6 @@ data class User(
 
     fun equalPassword(password: String): Boolean {
         return this.password == DigestUtils.md5DigestAsHex((password + userID).toByteArray())
-    }
-
-
-    override fun toString(): String {
-        return JSON.toJSONString(this, SerializerFeature.WRITE_MAP_NULL_FEATURES)
     }
 
     fun readyToUpdate(): UpdateUser {
@@ -95,33 +76,29 @@ data class User(
     ) {
         constructor(user: User) : this(user.userID, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
 
-        private fun fail(error: ServiceErrorEnum): Nothing {
-            throw SKException(error)
-        }
-
         operator fun set(type: Int, encryptPassword: Boolean = true, data: Any) {
             when (type) {
                 USERNAME_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     val error = LocalConfig.userService.checkUsername(data)
-                    if (error.ok()) {
+                    if (error.ok) {
                         this.username = data
                     } else {
-                        fail(error)
+                        error.throwout()
                     }
                 }
                 PASSWORD_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     when {
                         data.length > StaticConfig.maxPasswordLength -> {
-                            fail(ServiceErrorEnum.PASSWORD_TOO_LONG)
+                            ServiceErrorEnum.PASSWORD_TOO_LONG.throwout()
                         }
                         data.length < StaticConfig.minPasswordLength -> {
-                            fail(ServiceErrorEnum.WEAK_PASSWORD)
+                            ServiceErrorEnum.WEAK_PASSWORD.throwout()
                         }
                         else -> {
                             if (encryptPassword) {
@@ -134,15 +111,15 @@ data class User(
                 }
                 NICKNAME_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     val realNickname = data.trim()
                     when {
                         realNickname.isEmpty() -> {
-                            fail(ServiceErrorEnum.NICKNAME_EMPTY)
+                            ServiceErrorEnum.NICKNAME_EMPTY.throwout()
                         }
                         realNickname.length > StaticConfig.maxNickNameLength -> {
-                            fail(ServiceErrorEnum.NICKNAME_TOO_LONG)
+                            ServiceErrorEnum.NICKNAME_TOO_LONG.throwout()
                         }
                         else -> {
                             this.nickname = realNickname
@@ -152,10 +129,10 @@ data class User(
                 }
                 EMAIL_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     if (!SendEmail.checkEmail(data)) {
-                        fail(ServiceErrorEnum.WRONG_EMAIL)
+                        ServiceErrorEnum.WRONG_EMAIL.throwout()
                     } else {
                         this.email = data
                     }
@@ -163,74 +140,74 @@ data class User(
                 }
                 SEX_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     if (!StaticConfig.allowSexString.contains(data)) {
-                        fail(ServiceErrorEnum.UNKNOWN_SEX)
+                        ServiceErrorEnum.UNKNOWN_SEX.throwout()
                     } else {
                         this.sex = data
                     }
                 }
                 AVATAR_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.avatar = data
                 }
                 PHONE_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.phone = data
                 }
                 LASTSESSIONID_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.lastSessionID = data
                 }
                 IP_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.IP = data
                 }
                 SIGNATURE_FIELD -> {
                     if (data !is String) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     if (data.length > StaticConfig.maxSignatureLength) {
-                        fail(ServiceErrorEnum.SIGNATURE_TOO_LONG)
+                        ServiceErrorEnum.SIGNATURE_TOO_LONG.throwout()
                     } else {
                         this.signature = data
                     }
                 }
                 PRIVATESEX_FIELD -> {
                     if (data !is Boolean) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.privateSex = data
                 }
                 PRIVATEPHONE_FIELD -> {
                     if (data !is Boolean) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.privatePhone = data
                 }
                 PRIVATEEMAIL_FIELD -> {
                     if (data !is Boolean) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.privateEmail = data
                 }
                 ADMIN_FIELD -> {
                     if (data !is Boolean) {
-                        fail(ServiceErrorEnum.INVALID_TYPE.data(data))
+                        ServiceErrorEnum.INVALID_TYPE.data(data).throwout()
                     }
                     this.admin = data
                 }
                 else -> {
-                    fail(ServiceErrorEnum.TYPE_MISMATCH.data(type))
+                    ServiceErrorEnum.TYPE_MISMATCH.data(type).throwout()
                 }
             }
         }
@@ -256,13 +233,11 @@ data class User(
 
     companion object {
         private val snowFlake = SnowFlake(StaticConfig.snowFlakeWorkerId, StaticConfig.snowFlakeDataCenterId)
-        fun getNewID(): Long {
-            return snowFlake.nextId()
-        }
 
-        fun readyToUpdate(user: User): UpdateUser {
-            return UpdateUser(user)
-        }
+        fun getNewID() = snowFlake.nextId()
+
+        fun readyToUpdate(user: User) = UpdateUser(user)
+
 
         val allUserID
             get() = StaticConfig.signIDToAllUser

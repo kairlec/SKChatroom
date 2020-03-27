@@ -463,12 +463,11 @@ $(() => {
           area: ['560px', '300px'],
           success: function (layero, index) {
             console.log($(layero))
-            var panel
+            var panel = $(layero).children('#searchFriendPanel')
             $.each(data, function (index, item) {
               if (item.avatar == null || item.avatar === '@DEFAULT?') {
                 item.avatar = 'assets/images/1.png'
               }
-              panel = $(layero).children('#searchFriendPanel')
               console.log(panel)
               panel.append(userMethod.newAddFriendDom(item))
             })
@@ -628,12 +627,12 @@ function getGroupList () {
 
 /**
  * @description 刷新分组UI,此函数会等待获取分组数据
- * @returns true when rorward function success and flush success
+ * @returns true when forward function success and flush success
  */
 async function flushGroupList () {
+  const data = await getGroupList()
   console.log(getGroupList())
   try {
-    var data = await getGroupList()
   } catch (ajaxErrorStatus) {
     ajaxError(ajaxErrorStatus)
     return false
@@ -652,7 +651,7 @@ async function flushGroupList () {
 /**
  * @description 获取好友列表数据,此函数会等待刷新分组UI
  * @throws {XMLHttpRequest} ajaxErrorStatus
- * @returns Promise when rorward function success and ajax success
+ * @returns Promise when forward function success and ajax success
  */
 async function getFriendList () {
   var result = await flushGroupList()

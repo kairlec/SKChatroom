@@ -1,6 +1,11 @@
 package cn.skstudio.local.utils
 
 import cn.skstudio.service.impl.*
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -26,8 +31,13 @@ class LocalConfig {
     @Autowired
     private lateinit var redisServiceTemp: RedisServiceImpl
 
+    @Autowired
+    private lateinit var objectMapperTemp: ObjectMapper
+
     @PostConstruct
     fun init() {
+        objectMapper = objectMapperTemp
+
         userService = userServiceTemp
         if (userService.initialize() == null) {
             logger.warn("Init database table [User] failed")
@@ -56,6 +66,38 @@ class LocalConfig {
     }
 
     companion object {
+        lateinit var objectMapper: ObjectMapper
+            private set
+
+
+        fun String.Companion.toJSON(`object`: Any): String {
+            return objectMapper.writeValueAsString(`object`)
+        }
+
+        inline fun <reified T> String.json2Object(): T? {
+            return try {
+                objectMapper.readValue(this)
+            } catch (e: JsonParseException) {
+                null
+            }
+        }
+
+        fun String.toJsonNode(): JsonNode? {
+            return  try {
+                objectMapper.readTree(this)
+            } catch (e: JsonParseException) {
+                null
+            }
+        }
+
+        fun String.toObjectNode(): ObjectNode? {
+            return  try {
+                objectMapper.readTree(this) as ObjectNode
+            } catch (e: JsonParseException) {
+                null
+            }
+        }
+
         private val logger = LogManager.getLogger(LocalConfig::class.java)
         lateinit var userService: UserServiceImpl
             private set

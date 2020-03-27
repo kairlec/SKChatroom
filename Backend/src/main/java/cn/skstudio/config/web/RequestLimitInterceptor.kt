@@ -5,7 +5,7 @@ import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.local.utils.LocalConfig
 import cn.skstudio.local.utils.ResponseDataUtils
-import cn.skstudio.utils.Network
+import cn.skstudio.utils.IP
 import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
@@ -38,7 +38,7 @@ class RequestLimitInterceptor : HandlerInterceptor {
             val accessLimit = handler.getMethodAnnotation(RequestLimit::class.java) ?: return true
             val seconds = accessLimit.seconds
             val maxCount = accessLimit.maxCount
-            val ip = Network.getIpAddress(request)
+            val ip = request.IP
             val uri = request.requestURI
             val key = "$ip@$uri"
             logger.info("seconds=$seconds")
@@ -58,7 +58,7 @@ class RequestLimitInterceptor : HandlerInterceptor {
                 }
                 else -> {
                     logger.warn(""""拦截到"$ip"对"$uri"的异常连续访问""")
-                    response.writer.write(ResponseDataUtils.error(ServiceErrorEnum.REQUEST_FORBIDDEN).toString())
+                    response.writer.write(ServiceErrorEnum.REQUEST_FORBIDDEN.json)
                     logger.info("过期时间:" + LocalConfig.redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
                     return false
                 }

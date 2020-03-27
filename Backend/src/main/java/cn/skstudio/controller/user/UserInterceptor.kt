@@ -13,10 +13,10 @@ class UserInterceptor : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val error = RequestAuthenticator.authHttpServletRequest(request, blackAPIList)
-        return if (error.ok()) {
+        return if (error.ok) {
             true
         } else {
-            response.writer.write(ResponseDataUtils.error(error).toString())
+            response.writer.write(error.json)
             false
         }
     }

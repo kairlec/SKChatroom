@@ -2,6 +2,8 @@ package cn.skstudio.controller.public.error
 
 import cn.skstudio.`interface`.ResponseDataInterface
 import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.local.utils.ResponseDataUtils.responseError
+import org.apache.logging.log4j.LogManager
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
@@ -14,11 +16,15 @@ import org.springframework.web.bind.annotation.ResponseBody
  */
 
 @ControllerAdvice
-class ExceptionHandler {
+class SKExceptionHandler {
     @ExceptionHandler
     @ResponseBody
     fun exception(e: Exception): ResponseDataInterface {
-        e.printStackTrace()
-        return ResponseDataUtils.error(e)
+        logger.error(e.message)
+        return e.responseError
+    }
+
+    companion object {
+        private val logger = LogManager.getLogger(SKExceptionHandler::class.java)
     }
 }

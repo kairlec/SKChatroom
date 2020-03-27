@@ -2,7 +2,6 @@ package cn.skstudio.controller.websocket
 
 
 import cn.skstudio.local.utils.RequestAuthenticator
-import cn.skstudio.local.utils.ResponseDataUtils
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.http.server.ServerHttpRequest
@@ -23,9 +22,9 @@ class WebSocketInterceptor : HttpSessionHandshakeInterceptor() {
             logger.debug("WebSocket拦截器请求类型匹配成功")
             val session = request.servletRequest.session
             val error = RequestAuthenticator.authHttpSession(session)
-            if (!error.ok()) {
+            if (error.bad) {
                 if (response is ServletServerHttpResponse) {
-                    response.servletResponse.writer.write(ResponseDataUtils.error(error).toString())
+                    response.servletResponse.writer.write(error.json)
                 }
                 return false
             }

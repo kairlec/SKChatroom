@@ -1,6 +1,5 @@
 package cn.skstudio.exception
 
-import cn.skstudio.local.utils.ResponseDataUtils
 
 class SKException : RuntimeException {
     private var serviceErrorEnum: ServiceErrorEnum? = null
@@ -39,7 +38,7 @@ class SKException : RuntimeException {
      */
     constructor(detailedMessage: String, t: Throwable) : super(detailedMessage, t)
 
-    fun getServiceError(): ServiceErrorEnum? {
+    fun getServiceErrorEnum(): ServiceErrorEnum? {
         return serviceErrorEnum
     }
 }
