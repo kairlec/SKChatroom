@@ -7,23 +7,104 @@ package cn.skstudio.service.impl
  *@create: 2020-02-27 13:43
  */
 
+import cn.skstudio.config.system.StartupConfig
 import org.apache.logging.log4j.LogManager
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.SpringApplication
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Lazy
+import org.springframework.data.redis.RedisConnectionFailureException
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.connection.RedisPassword
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
+import redis.clients.jedis.JedisPoolConfig
 import java.io.Serializable
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.annotation.PostConstruct
 import javax.annotation.Resource
-
+import kotlin.system.exitProcess
 
 @Service
-class RedisServiceImpl {
+open class RedisServiceImpl {
     companion object {
         private val logger = LogManager.getLogger(RedisServiceImpl::class.java)
     }
 
+    @Bean(name = ["RedisProperties"])
+    @ConditionalOnMissingBean
+    @ConfigurationProperties("spring.redis")
+    open fun redisProperties(): RedisProperties {
+        return RedisProperties()
+    }
+
+    @Autowired
+    @Qualifier("RedisProperties")
+    private lateinit var properties: RedisProperties
+
+    open fun jedisConnectionFactory(): RedisConnectionFactory {
+        val poolConfig = JedisPoolConfig()
+        poolConfig.maxIdle = properties.jedis.pool.maxIdle
+        poolConfig.minIdle = properties.jedis.pool.minIdle
+        poolConfig.maxWaitMillis = properties.jedis.pool.maxWait.toMillis()
+        poolConfig.testOnBorrow = true
+        poolConfig.testOnCreate = true
+        poolConfig.testWhileIdle = true
+        val redisConnectionFactory = JedisConnectionFactory(poolConfig)
+        val standaloneConfiguration = redisConnectionFactory.standaloneConfiguration!!
+        standaloneConfiguration.hostName = properties.host
+        standaloneConfiguration.password = RedisPassword.of(properties.password)
+        standaloneConfiguration.port = properties.port
+        standaloneConfiguration.database = properties.database
+        return redisConnectionFactory
+    }
+
+    @Lazy
+    @Bean(name = ["RedisTemplate"])
+    open fun redisTemplate(): RedisTemplate<*, *> {
+        val redisTemplate: RedisTemplate<*, *> = RedisTemplate<Any?, Any?>()
+        redisTemplate.connectionFactory = jedisConnectionFactory()
+        return redisTemplate
+    }
+
+    @Lazy
     @Resource
+    @Qualifier("RedisTemplate")
     private lateinit var redisTemplate: RedisTemplate<Serializable, Any>
+
+
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
+    @Autowired
+    private lateinit var startupConfig: StartupConfig
+
+    @PostConstruct
+    fun init() {
+        if (startupConfig.redisEnabled) {
+            try {
+                set("skchatroom_init", true)
+                logger.info("Redis init:${get("skchatroom_init")}")
+                remove("skchatroom_init")
+            } catch (e: RedisConnectionFailureException) {
+                e.printStackTrace()
+                logger.fatal("Init connect failed")
+                exitProcess(SpringApplication.exit(applicationContext))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                logger.fatal("Init init failed")
+                exitProcess(SpringApplication.exit(applicationContext))
+            }
+            logger.info("Init redis success")
+        }
+    }
 
     fun setExpire(key: String, expireTime: Long, timeUnit: TimeUnit = TimeUnit.SECONDS): Boolean {
         return try {

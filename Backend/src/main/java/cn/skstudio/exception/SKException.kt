@@ -1,42 +1,27 @@
 package cn.skstudio.exception
 
-
 class SKException : RuntimeException {
-    private var serviceErrorEnum: ServiceErrorEnum? = null
+    private val serviceErrorEnum: ServiceErrorEnum?
 
-    /**
-     * 无参默认构造UNSPECIFIED
-     */
-    constructor() : super()
+    constructor() : super() {
+        this.serviceErrorEnum = null
+    }
 
-    /**
-     * 由业务错误ServiceError引发
-     */
-    constructor(serviceErrorEnum: ServiceErrorEnum) : super(serviceErrorEnum.msg) {
+    constructor(serviceErrorEnum: ServiceErrorEnum, cause: Throwable? = null) : super(serviceErrorEnum.msg, cause) {
         this.serviceErrorEnum = serviceErrorEnum
     }
 
-    /**
-     * 指定详细描述构造通用异常
-     *
-     * @param detailedMessage 详细描述
-     */
-    constructor(detailedMessage: String) : super(detailedMessage)
+    constructor(detailedMessage: String) : super(detailedMessage) {
+        this.serviceErrorEnum = null
+    }
 
-    /**
-     * 指定导火索构造通用异常
-     *
-     * @param t 导火索
-     */
-    constructor(t: Throwable) : super(t)
+    constructor(t: Throwable) : super(t) {
+        this.serviceErrorEnum = null
+    }
 
-    /**
-     * 构造通用异常
-     *
-     * @param detailedMessage 详细描述
-     * @param t               导火索
-     */
-    constructor(detailedMessage: String, t: Throwable) : super(detailedMessage, t)
+    constructor(detailedMessage: String, t: Throwable) : super(detailedMessage, t) {
+        this.serviceErrorEnum = null
+    }
 
     fun getServiceErrorEnum(): ServiceErrorEnum? {
         return serviceErrorEnum

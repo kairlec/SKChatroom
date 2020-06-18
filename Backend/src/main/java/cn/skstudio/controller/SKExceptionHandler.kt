@@ -1,12 +1,12 @@
-package cn.skstudio.controller.public.error
+package cn.skstudio.controller
 
-import cn.skstudio.`interface`.ResponseDataInterface
-import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.intf.ResponseDataInterface
 import cn.skstudio.local.utils.ResponseDataUtils.responseError
 import org.apache.logging.log4j.LogManager
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
+import javax.servlet.http.HttpServletResponse
 
 /**
  *@program: Backend
@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.ResponseBody
 class SKExceptionHandler {
     @ExceptionHandler
     @ResponseBody
-    fun exception(e: Exception): ResponseDataInterface {
-        logger.error(e.message)
-        return e.responseError
+    fun exception(e: Exception, response: HttpServletResponse): ResponseDataInterface {
+        val serviceError = e.responseError
+        if (serviceError.code == 90003 || (serviceError.code in 50000..59999)) {
+            response.status = 500
+        }
+        return serviceError
     }
 
     companion object {

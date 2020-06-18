@@ -1,13 +1,11 @@
-package cn.skstudio.controller.public.error
+package cn.skstudio.controller
 
-import cn.skstudio.`interface`.ResponseDataInterface
 import cn.skstudio.exception.ServiceErrorEnum
-import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.intf.ResponseDataInterface
 import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
-import javax.servlet.http.HttpServletRequest
 
 /**
  *@program: Backend
@@ -24,7 +22,7 @@ class NotFoundExceptionHandler : ErrorController {
 
     @RequestMapping(value = ["/error"])
     @ResponseBody
-    fun error(request: HttpServletRequest): ResponseDataInterface {
-        return ServiceErrorEnum.UNKNOWN_REQUEST.data(request.requestURI)
+    fun error(): ResponseDataInterface {
+        return ServiceErrorEnum.UNKNOWN_REQUEST
     }
 }

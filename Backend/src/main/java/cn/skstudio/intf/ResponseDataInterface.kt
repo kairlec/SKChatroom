@@ -1,6 +1,6 @@
-package cn.skstudio.`interface`
+package cn.skstudio.intf
 
-import cn.skstudio.local.utils.LocalConfig.Companion.toJSON
+import cn.skstudio.utils.toJSON
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 interface ResponseDataInterface {

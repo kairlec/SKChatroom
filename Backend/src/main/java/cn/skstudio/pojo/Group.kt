@@ -1,7 +1,7 @@
 package cn.skstudio.pojo
 
 import cn.skstudio.annotation.NoArg
-import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.config.system.StaticConfig
 import cn.skstudio.utils.SnowFlake
 
 @NoArg

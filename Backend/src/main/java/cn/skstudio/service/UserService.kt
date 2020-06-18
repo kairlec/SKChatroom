@@ -47,9 +47,4 @@ interface UserService {
     //更新用户的密码信息
     fun updatePassword(user: User.UpdateUser): Int?
 
-    //检查用户名是否符合
-    fun checkUsername(username: String): ServiceErrorEnum
-
-    //检查邮箱是否合格
-    fun checkEmail(email: String): Boolean
 }

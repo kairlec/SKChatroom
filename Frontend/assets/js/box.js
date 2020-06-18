@@ -1,5 +1,4 @@
 const $ = layui.$
-// 中性图标 <i class="iconfont layui-extend-zhongxing my_iconfont"></i>
 const waitMethod = {
   id: 0,
   start: function (msg) {
@@ -20,6 +19,7 @@ const groupMethod = {
       return $('#g' + groupID + '-name').text()
     } else {
       $('#g' + groupID + '-name').text(name)
+      $('#g' + groupID).data('group-name', name)
     }
   },
   groupListData: new Map(),
@@ -28,14 +28,15 @@ const groupMethod = {
   },
   // <i class="layui-bg-red layui-badge-dot msgdot" id="MessageGroupDot"></i>
   newGroup: function (groupObject) {
+    console.log(groupObject)
     return (
       $('<div/>').attr({ class: 'layui-colla-item' }).html(
         $('<h2/>').attr({ class: 'layui-colla-title' }).html(
           $('<i/>').attr({ class: 'layui-icon layui-icon-right' })).append(
-          $('<span/>').text(groupObject.groupName)).append(
+          $('<span/>').attr({ id: 'g' + groupObject.groupID + '-name' }).text(groupObject.groupName)).append(
           $('<i/>').attr({ class: 'layui-bg-red layui-badge-dot GroupMsgdot', style: 'display: none;' })
         )).append(
-        $('<div/>').attr({ class: 'layui-colla-content group', id: 'g' + groupObject.groupID }))
+        $('<div/>').attr({ class: 'layui-colla-content group', id: 'g' + groupObject.groupID }).data('group-name', groupObject.groupName).data('group-order', groupObject.groupOrder))
     )
   },
   addFriendInGroup: function (friendDOM, groupID) {
@@ -44,7 +45,7 @@ const groupMethod = {
   }
 
 }
-const uiMethod = {
+var uiMethod = {
   newMsgContent: {
     hasMessage: function (userID) {
       return $('m' + userID).length !== 0
@@ -131,6 +132,12 @@ const uiMethod = {
     }
   },
   addGroup: function (groupDOM) {
+    const sleep = (ms) => {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+    while ($('#group').length === 0) {
+      sleep(10)
+    }
     $('#group').append(groupDOM)
   },
   userStatus: {
@@ -164,13 +171,17 @@ const uiMethod = {
     },
     showUser: function (userID) {
       console.log(userID)
-      $('#f' + userID).find('.UserMsgdot').show().css('display', 'inline-block')
-      console.log($('#f' + userID).find('.UserMsgdot'))
-      this.showGroup($('#f' + userID).parent('.group').attr('id').substr(1))
+      var userDom = $('#f' + userID)
+      console.log(userDom)
+      userDom.find('.UserMsgdot').css('display', 'inline-block')
+      $('#msguser-' + userID).find('.UserMsgdot').css('display', 'inline-block')
+      console.log(userDom.find('.UserMsgdot'))
+      this.showGroup(userDom.parent('.group').attr('id').substr(1))
     },
     hideUser: function (userID) {
       var hasMsg = false
       $('#f' + userID).find('.UserMsgdot').hide()
+      $('#msguser-' + userID).find('.UserMsgdot').hide()
       var groupDOM = $('#f' + userID).parent('.group')
       groupDOM.find('.user').each(function (index, item) {
         console.log(index)
@@ -188,20 +199,127 @@ const uiMethod = {
   }
 }
 
+const messageMethod = {
+  messageListData: new Map(),
+  messageFromListData: new Set(),
+  newFriendMsgDom: function (user, message) {
+    var DOM = null
+    switch (message.action) {
+      case 'ADD_FRIEND_REQUEST':
+        var messageContent = JSON.parse(message.content)
+        if (messageContent.type === 'RESPONSE') {
+          return ''
+        }
+        if (this.messageFromListData.has(user.userID)) {
+          return ''
+        } else {
+          this.messageFromListData.add(user.userID)
+        }
+        console.log(messageContent)
+        DOM = (
+          $('<div/>').attr({ class: 'layui-row box-my-list user msgdom' }).data('msg-id', message.messageID).data('target-id', user.userID).html(
+            $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).html(
+                $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+                  $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
+            $('<div/>').attr({ class: 'layui-col-xs8' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).html(
+                $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
+                  $('<span>').attr({ class: 'userNickname' }).text(user.nickname)).append(
+                  $('<i>').attr({ class: 'layui-bg-red layui-badge-dot UserMsgdot' }))).append(
+                $('<div/>').attr({ class: 'layui-col-xs12 box-my-msg box-line-1', title: messageContent.message }).text('[添加好友] ' + messageContent.message)))).append(
+            $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+              (() => {
+                if (messageContent.type === 'REQUEST') {
+                  switch (messageContent.result) {
+                    case 'IGNORE':
+                      return $('<button/>').attr({ class: 'layui-btn requestBtn-class3 layui-btn-disabled layui-bg-gray' }).text('已忽略')
+                    case 'ACCRPT':
+                      return $('<button/>').attr({ class: 'layui-btn requestBtn-class3 layui-btn-disabled' }).text('已接受')
+                    case 'REFUSE':
+                      return $('<button/>').attr({ class: 'layui-btn requestBtn-class3 layui-btn-disabled layui-bg-red' }).text('已拒绝')
+                    case 'WAIT':
+                    default:
+                      return $('<button/>').attr({ class: 'layui-btn requestBtn-class requestBtn' }).text('接受').data('msg-id', message.messageID).data('target-id', user.userID)
+                  }
+                }
+              })()
+            )
+          )
+        )
+        break
+      case 'GROUP_CHAT_MESSAGE':
+        break
+      case 'PRIVATE_CHAT_MESSAGE':
+        if (message.fromID === user.userID && !message.isRead) {
+          uiMethod.MessageDot.showUser(user.userID)
+        }
+        if (this.messageFromListData.has(user.userID)) {
+          var targetDom = $('#msgdom-' + user.userID)
+          var time = targetDom.data('time')
+          if (message.time > time) {
+            targetDom.text(message.content)
+          }
+          return ''
+        } else {
+          this.messageFromListData.add(user.userID)
+        }
+        DOM = (
+          $('<div/>').attr({ class: 'layui-row box-my-list user msgdom', id: 'msguser-' + user.userID }).data('msg-id', message.messageID).data('target-id', user.userID).data('type', 'OPEN').html(
+            $('<div/>').attr({ class: 'layui-col-xs2' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).html(
+                $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+                  $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
+            $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).html(
+                $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
+                  $('<span>').attr({ class: 'userNickname' }).text(user.nickname)).append(
+                  $('<i>').attr({ class: 'layui-bg-red layui-badge-dot UserMsgdot' }))).append(
+                $('<div/>').attr({ class: 'layui-col-xs12 box-my-msg box-line-1', id: 'msgdom-' + user.userID, title: message.content }).data('time', message.time).text(message.content))))
+        )
+        break
+      case 'DELETE_FRIEND_REQUEST':
+        break
+      case 'SYSTEM_NOTIFICATION':
+        break
+      default:
+        break
+    }
+    return DOM
+  },
+  addOrRefreshMessage: function (data) {
+    this.messageListData.set(data.messageID, data)
+  }
+}
+
 const userMethod = {
   userListData: new Map(),
   addOrRefreshUser: function (data) {
-    if (data.avatar == null || data.avatar === '@DEFAULT?') {
+    if (data.avatar === null || data.avatar === '@DEFAULT?') {
       data.avatar = 'assets/images/1.png'
     }
     this.userListData.set(data.userID, data)
   },
-  isFriend: function (userID) {
-    return false
-    return this.userListData.has(userID)
+  checkUserData: async function (userID, callback) {
+    if (this.userListData.has(userID)) {
+      callback(this.userListData.get(userID))
+    } else {
+      var data
+      try {
+        data = this.getUser(userID)
+      } catch (ajaxErrorStatus) {
+        ajaxError(ajaxErrorStatus)
+        return null
+      }
+      warpResponseData(data, function (data) {
+        userMethod.addOrRefreshUser(data)
+        callback(data)
+      })
+    }
   },
-  addOrRefreshMessage: function (data) {
-    this.userListData.add(data.fromID)
+  isFriend: function (userID) {
+    // return true
+    return this.userListData.has(userID)
   },
   newFriendDom: function (user) {
     const DOM = (
@@ -220,26 +338,19 @@ const userMethod = {
     return DOM
   },
   newAddFriendDom: function (user) {
-    // TODO:添加好友的块
     const DOM = (
       $('<div/>').attr({ class: 'layui-row box-my-list user', id: 'a' + user.userID }).html(
         $('<div/>').attr({ class: 'layui-col-xs1' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12' }).html(
               $('<img/>').attr({ class: 'box-my-pic', src: user.avatar }))))).append(
-        $('<div/>').attr({ class: 'layui-col-xs8' }).html(
+        $('<div/>').attr({ class: 'layui-col-xs10' }).html(
           $('<div/>').attr({ class: 'layui-row' }).html(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-name' }).html(
               $('<span>').attr({ class: 'userNickname' }).text(user.nickname))).append(
             $('<div/>').attr({ class: 'layui-col-xs12 box-my-signal box-line-1' }).text(user.signature)))).append(
-        $('<div/>').attr({ class: 'layui-col-xs3' }).html(
-          $('<div/>').attr({ class: 'layui-row' }).html(
-            $('<div/>').attr({ class: 'layui-col-xs6' }).html(
-              $('<button/>').attr({ class: 'layui-btn searchBtn informationBtn', type: 'button' }).text('资料'))).append(
-            $('<div/>').attr({ class: 'layui-col-xs6' }).html(
-              $('<button/>').attr({ class: `layui-btn searchBtn ${this.isFriend(user.userID) ? 'chatBtn' : 'addFriendBtn'}`, type: 'button' }).text(this.isFriend(user.userID) ? '聊天' : '添加'))
-          )
-        )
+        $('<div/>').attr({ class: 'layui-col-xs1' }).html(
+          $('<button/>').attr({ class: `layui-btn searchBtn ${this.isFriend(user.userID) ? 'chatBtn' : 'addFriendBtn'}`, type: 'button' }).text(this.isFriend(user.userID) ? '会话' : '添加'))
       )
     )
     return DOM
@@ -328,7 +439,7 @@ const userMethod = {
   getUnreadMessage: function (fnSuccess) {
     $.ajax({
       type: 'POST',
-      url: api.getMessage + 'unreadTo',
+      url: api.getUnreadMessage,
       dataType: 'json',
       xhrFields: {
         withCredentials: true
@@ -337,20 +448,34 @@ const userMethod = {
       error: ajaxError
     })
   },
-  getUser: function (userID, fnSuccess) {
+  getHistoryMessage: function (fnSuccess) {
     $.ajax({
       type: 'POST',
-      url: api.getUserInfo + userID,
+      url: api.getHistoryMessage,
       dataType: 'json',
       xhrFields: {
         withCredentials: true
       },
+      success: function (data) { warpResponseData(data, fnSuccess) },
+      error: ajaxError
+    })
+  },
+  getUser: function (userID) {
+    if (this.userListData.has(userID)) {
+      return { code: 0, msg: 'OK', data: this.userListData.get(userID) }
+    }
+    var userData = null
+    $.ajax({
+      type: 'POST',
+      url: api.getUserInfo + userID,
+      dataType: 'json',
+      async: false,
       success: function (data) {
-        console.log(data)
-        warpResponseData(data, fnSuccess)
+        userData = data
       },
       error: ajaxError
     })
+    return userData
   }
 }
 
@@ -383,34 +508,46 @@ $(() => {
   })
 
   $('#group').on('contextmenu', '.layui-colla-item', function (event) {
-    parent.menuIndex = parent.mouseRightMenu.open(getGroupData($(this).children('.group').attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
-      // TODO:分组右击
+    parent.menuIndex = parent.mouseRightMenu.open(getGroupData((() => { var group = $(this).children('.group'); return { id: group.attr('id').substr(1), order: group.data('group-order'), name: group.data('group-name') } })()), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
       switch (data.type) {
         case 1:// 展开/收缩
-          uiMethod.GroupPand.toggleExpanded(data.data)
+          uiMethod.GroupPand.toggleExpanded(data.data.id)
           break
         case 2:// 重命名
           parent.layer.prompt({
             formType: 0,
             title: '请输入分组名',
-            value: groupMethod.name(data.data),
+            value: data.data.name,
             area: ['800px', '350px'] // 自定义文本域宽高
           }, function (value, index, elem) {
-            // $.ajax({
-            //   type: 'POST',
-            //   url: api.ignoreAddFriend,
-            //   data:
-            //   dataType: 'json',
-            //   xhrFields: {
-            //     withCredentials: true
-            //   },
-            //   success: function (data) { warpResponseData(data, fnSuccess) },
-            //   error: ajaxError
-            // })
+            console.log(value)
+            console.log(data.data)
             parent.layer.close(index)
+            waitMethod.start('处理中')
+            $.ajax({
+              type: 'POST',
+              url: api.updateGroup,
+              dataType: 'json',
+              data: { id: data.data.id, name: value, order: data.data.order },
+              success: function (responseData) {
+                warpResponseData(responseData, function () {
+                  waitMethod.end()
+                  console.log(data.data.id)
+                  console.log(value)
+                  groupMethod.name(data.data.id, value)
+                })
+              },
+              error: ajaxError
+            })
           })
           break
         case 3:// 删除分组
+        // TODO: 删除分组
+          parent.layer.msg('未完善')
+          // parent.layer.confirm('你确定要删除该分组吗?', { icon: 3, title: '删除提示' }, function (index) {
+          //   console.log(data.data)
+          //   parent.layer.close(index)
+          // })
           break
       }
     })
@@ -419,30 +556,209 @@ $(() => {
 
   $('#group').on('contextmenu', '.user', function (event) {
     parent.menuIndex = parent.mouseRightMenu.open(getUserData($(this).attr('id').substr(1)), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
-      // TODO:用户右击
       switch (data.type) {
         case 1:// 打开会话
           openWindow(data.data)
           break
         case 2:// 删除好友
+          parent.layer.confirm('你确定要删除该好友吗?', { icon: 3, title: '删除提示' }, function (index) {
+            parent.layer.close(index)
+            waitMethod.start('提交中')
+            $.ajax({
+              url: api.deleteFriend,
+              dataType: 'json',
+              data: { targetID: data.data },
+              success: function (data) {
+                warpResponseData(data, function () {
+                  parent.ChatBoxMap.closeID(data.data)
+                  $('#msguser-' + data.data).remove()
+                  $('#f' + data.data).remove()
+                  waitMethod.end()
+                })
+              },
+              error: ajaxError
+            })
+          })
           break
-        // case 3:
-        //   break
+        case 3:// 查看资料
+          parent.layer.open({
+            type: 1,
+            title: '详细资料',
+            content: createUserInfomationPanelDOM(data.data),
+            area: ['600px', '500px'],
+            shadeClose: false,
+            resize: true
+          })
+          break
       }
     })
     return false
   })
 
   $('.boxBlank').on('contextmenu', function (event) {
+    if (!$('#mainMenu').hasClass('layui-show')) {
+      return
+    }
     parent.menuIndex = parent.mouseRightMenu.open(getBlankData(), { offset: parent.getBoxMouseXY(event.pageX, event.pageY) }, function (data) {
-      // TODO: 空白块右击
       switch (data.type) {
         case 1:// 刷新列表
+        // TODO: 刷新列表
+          parent.layer.msg('未完善')
           break
         case 2:// 新建分组
+          parent.layer.prompt({
+            formType: 0,
+            title: '请输入分组名',
+            value: '',
+            area: ['800px', '350px'] // 自定义文本域宽高
+          }, function (value, index, elem) {
+            console.log(value)
+            console.log(data.data)
+            parent.layer.close(index)
+            waitMethod.start('处理中')
+            $.ajax({
+              type: 'POST',
+              url: api.createGroup,
+              dataType: 'json',
+              data: { name: value, order: 0 },
+              success: function (responseData) {
+                warpResponseData(responseData, function (data) {
+                  waitMethod.end()
+                  groupMethod.addOrRefresh(data)
+                  uiMethod.addGroup(groupMethod.newGroup(data))
+                })
+              },
+              error: ajaxError
+            })
+          })
           break
         // case 3:
         //   break
+      }
+    })
+  })
+
+  $('.boxBlank').on('click', '.msgdom', function (event) {
+    console.log($(this))
+    var type = $(this).data('type')
+    if (type === 'OPEN') {
+      openWindow($(this).data('target-id'))
+    } else {
+      var messageID = $(this).data('msg-id')
+      var targetID = $(this).data('target-id')
+      parent.layer.open({
+        type: 1,
+        id: 'msgdetail',
+        title: '详细信息',
+        content: createMsgDetailPanelContent(messageID, targetID),
+        area: ['600px', '500px'],
+        shadeClose: false,
+        resize: true,
+        success: function (layero, index) {
+          var msgdetail = $(layero).children('#msgdetail')
+          console.log(msgdetail)
+          msgdetail.on('click', '.ignore-btn', function (event) {
+            waitMethod.start('提交中')
+            $.ajax({
+              type: 'POST',
+              url: api.ignoreAddFriend,
+              data: { messageID: messageID },
+              dataType: 'json',
+              success: function (data) {
+                waitMethod.end()
+                warpResponseData(data, (data) => {
+                  updateSelfData(data)
+                })
+              },
+              error: ajaxError
+            })
+          })
+          msgdetail.on('click', '.refuse-btn', function (event) {
+            waitMethod.start('提交中')
+            $.ajax({
+              type: 'POST',
+              url: api.refuseAddFriend,
+              data: { messageID: messageID },
+              dataType: 'json',
+              success: function (data) {
+                waitMethod.end()
+                warpResponseData(data, (data) => {
+                  updateSelfData(data)
+                })
+              },
+              error: ajaxError
+            })
+          })
+          msgdetail.on('click', '.accept-btn', function (event) {
+            console.log(messageID)
+            console.log(targetID)
+            var chooseGroupPanelIndex = parent.layer.open({
+              type: 1,
+              title: '选择分组',
+              content: createGroupChoosePanel(),
+              id: 'groupChoose',
+              area: ['480px', '300px'],
+              success: function (layero, index) {
+                parent.layui.form.render()
+                parent.layui.form.on('submit(chooseGroupBtn)', function (data) {
+                  console.log(data.field)
+                  waitMethod.start('提交中')
+                  $.ajax({
+                    type: 'POST',
+                    url: api.acceptAddFriend,
+                    data: { groupID: data.field.group, messageID: messageID },
+                    dataType: 'json',
+                    success: function (data) {
+                      waitMethod.end()
+                      warpResponseData(data, (data) => {
+                        updateSelfData(data)
+                      })
+                    },
+                    error: ajaxError
+                  })
+                  parent.layer.close(chooseGroupPanelIndex)
+                  return false
+                })
+              }
+            })
+          })
+        }
+      })
+    }
+  })
+  $('.boxBlank').on('click', '.requestBtn', function (event) {
+    event.stopPropagation()
+    var messageID = $(this).data('msg-id')
+    var targetID = $(this).data('target-id')
+    console.log(messageID)
+    console.log(targetID)
+    var chooseGroupPanelIndex = parent.layer.open({
+      type: 1,
+      title: '选择分组',
+      content: createGroupChoosePanel(),
+      id: 'groupChoose',
+      area: ['480px', '300px'],
+      success: function (layero, index) {
+        parent.layui.form.render()
+        parent.layui.form.on('submit(chooseGroupBtn)', function (data) {
+          console.log(data.field)
+          waitMethod.start('提交中')
+          $.ajax({
+            type: 'POST',
+            url: api.acceptAddFriend,
+            data: { groupID: data.field.group, messageID: messageID },
+            dataType: 'json',
+            success: function (data) {
+              waitMethod.end()
+              warpResponseData(data, (data) => {
+                updateSelfData(data)
+              })
+            },
+            error: ajaxError
+          })
+          parent.layer.close(chooseGroupPanelIndex)
+          return false
+        })
       }
     })
   })
@@ -454,35 +770,11 @@ $(() => {
       area: ['800px', '600px'] // 自定义文本域宽高
     }, function (value, index, elem) {
       userMethod.searchUser(value, function (data) {
-        // TODO: 好友搜索
-        parent.layer.open({
-          type: 1,
-          title: '查找好友',
-          content: '',
-          id: 'searchFriendPanel',
-          area: ['560px', '300px'],
-          success: function (layero, index) {
-            console.log($(layero))
-            var panel = $(layero).children('#searchFriendPanel')
-            $.each(data, function (index, item) {
-              if (item.avatar == null || item.avatar === '@DEFAULT?') {
-                item.avatar = 'assets/images/1.png'
-              }
-              console.log(panel)
-              panel.append(userMethod.newAddFriendDom(item))
-            })
-            panel.on('click', '.informationBtn', function (event) {
-              console.log('好友资料')
-            })
-            panel.on('click', '.chatBtn', function (event) {
-              console.log('好友聊天')
-            })
-            panel.on('click', '.addFriendBtn', function (event) {
-              console.log('好友添加')
-            })
-          }
-        })
-        console.log(data)
+        if (data.length === 0) {
+          parent.layer.msg('未找到相关用户')
+          return
+        }
+        openSearchFriendPanel(data)
       })
       parent.layer.close(index)
     })
@@ -592,20 +884,331 @@ $(() => {
     })
   })
 
-  userMethod.getUnreadMessage((data) => {
-    console.log(data)
-    $.each(data, function (index, item) {
-      parent.actionMessagePool.addMessage(item.fromID, item)
-    })
-  })
-
+  waitMethod.start('加载中...')
   updateSelfData(parent.selfData)
-
-  flushFriendList()
+  flushFriendList().then(() => {
+    userMethod.getUnreadMessage((data) => {
+      console.log(data)
+      data.forEach((item) => {
+        if (!messageMethod.messageListData.has(item.messageID)) {
+          var targetid = item.fromID === parent.selfData.userID ? item.toID : item.fromID
+          if (item.action === 'PRIVATE_CHAT_MESSAGE') {
+            parent.actionMessagePool.addMessage(targetid, item)
+          }
+          messageMethod.addOrRefreshMessage(item)
+          userMethod.checkUserData(targetid, function (user) {
+            $('#newMsgContent').append(messageMethod.newFriendMsgDom(user, item))
+          })
+        }
+      })
+    })
+    userMethod.getHistoryMessage((data) => {
+      console.log(data)
+      data.forEach((item) => {
+        if (!messageMethod.messageListData.has(item.messageID)) {
+          var targetid = item.fromID === parent.selfData.userID ? item.toID : item.fromID
+          if (item.action === 'PRIVATE_CHAT_MESSAGE') {
+            parent.actionMessagePool.addMessage(targetid, item)
+          }
+          messageMethod.addOrRefreshMessage(item)
+          userMethod.checkUserData(targetid, function (user) {
+            $('#newMsgContent').append(messageMethod.newFriendMsgDom(user, item))
+          })
+        }
+      })
+    })
+    waitMethod.end()
+  })
 })
 
+function createGroupChoosePanel () {
+  var DOM = $('<div/>')
+  DOM.html(
+    $('<form/>').attr({ class: 'layui-form', action: '##', onsubmit: 'return false', method: 'post' }).append(
+      $('<div/>').attr({ class: 'layui-form-item' }).append(
+        $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('选择分组')
+      ).append(
+        $('<div/>').attr({ class: 'layui-input-block fullselect width50p' }).html(
+          (() => {
+            var select = $('<select/>').attr({ name: 'group' })
+            console.log(groupMethod.groupListData)
+            groupMethod.groupListData.forEach(function (group, groupID) {
+              console.log(group)
+              select.append($('<option/>').attr(groupID === -parent.selfData.userID ? { value: groupID, select: '' } : { value: groupID }).text(group.groupName))
+            })
+            return select
+          })()
+        )
+      ).append(
+        $('<button/>').attr({ class: 'layui-btn', id: 'choose', type: 'submit', 'lay-submit': '', 'lay-filter': 'chooseGroupBtn' }).text('确定')
+      )
+    )
+  )
+  return DOM.html()
+}
+
+function createMsgDetailPanelContent (messageID, targetID) {
+  const message = messageMethod.messageListData.get(messageID)
+  var messageContent = JSON.parse(message.content)
+  console.log(message)
+  var userData = userMethod.getUser(message.fromID)
+  if (userData.code !== 0) {
+    responseError(userData.msg)
+    return ''
+  }
+  const user = userData.data
+  console.log(user)
+  var tmp = $('<div/>')
+  tmp.append(
+    $('<div/>').attr({ class: 'layui-row' }).append(
+      $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+        $('<img/>').attr({ class: 'box-my-pic', src: user.avatar })
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs9 padding-10' }).html(
+        $('<div/>').attr({ class: 'layui-row' }).append(
+          $('<div/>').attr({ class: 'layui-col-xs12' }).append(
+            $('<span>').attr({ class: 'title-label' }).text('昵称:')
+          ).append(
+            $('<span>').attr({ class: 'nickname' }).text(user.nickname)
+          )
+        ).append(
+          $('<div/>').attr({ class: 'layui-col-xs12' }).append(
+            $('<span>').attr({ class: 'title-label' }).text('性别:')
+          ).append(
+            (() => {
+              switch (user.sex) {
+                case '@PRIVATE?':
+                  return $('<i/>').attr({ class: 'iconfont layui-extend-zhongxing my_iconfont sexicon', title: '未公开' })
+                case '男':
+                  return $('<i/>').attr({ class: 'layui-icon layui-icon-male my_iconfont sexicon', title: '男' })
+                case '女':
+                  return $('<i/>').attr({ class: 'layui-icon layui-icon-female my_iconfont sexicon', title: '女' })
+                default:
+                  return $('<i/>').attr({ class: 'iconfont layui-extend-zhongxing my_iconfont sexicon', title: '未知' })
+              }
+            })()
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+        $('<div/>').attr({ class: 'layui-row layui-col-space5' }).html(
+          $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+            $('<div/>').attr({ class: 'border' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+                  $('<i/>').attr({ class: 'iconfont layui-extend-youxiang my_iconfont emailicon', title: '邮箱' })
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs9', style: 'float:right' }).html(
+                  $('<div/>').attr({ class: 'infobox' }).html(
+                    $('<span/>').text(user.email === '@PRIVATE?' ? '私密' : user.email)
+                  )
+                )
+              )
+            )
+          )
+        ).append(
+          $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+            $('<div/>').attr({ class: 'border' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+                  $('<i/>').attr({ class: 'layui-icon layui-icon-cellphone my_iconfont phoneicon', title: '电话' })
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs9', style: 'float:right' }).html(
+                  $('<div/>').attr({ class: 'infobox' }).html(
+                    $('<span/>').text(user.phoneNumber === '@PRIVATE?' ? '私密' : (user.phoneNumber === null || user.phoneNumber === '' ? '未知' : user.phone))
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+        $('<div/>').attr({ class: 'border' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).append(
+            $('<div/>').attr({ class: 'layui-col-xs1 sigicon' }).html(
+              $('<i/>').attr({ class: 'layui-icon layui-icon-note my_iconfont', title: '个性签名' })
+            )
+          ).append(
+            $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+              $('<div/>').attr({ class: 'sig' }).html(
+                $('<span/>').text(user.signature)
+              )
+            )
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+        $('<div/>').attr({ class: 'border' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).append(
+            $('<div/>').attr({ class: 'layui-col-xs1 sigicon' }).html(
+              $('<i/>').attr({ class: 'iconfont layui-extend-icon-test8 my_iconfont', title: '验证消息' })
+            )
+          ).append(
+            $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+              $('<div/>').attr({ class: 'sig' }).html(
+                $('<span/>').text(messageContent.message)
+              )
+            )
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12', style: 'margin-top: 15px;' }).html(
+        (() => {
+          switch (messageContent.result) {
+            case 'IGNORE':
+              return $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs12', style: 'text-align: center;' }).html(
+                  $('<button/>').attr({ class: 'layui-btn layui-bg-gray layui-btn-disabled', type: 'button' }).text('已忽略')
+                )
+              )
+            case 'ACCEPT':
+              return $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs12', style: 'text-align: center;' }).html(
+                  $('<button/>').attr({ class: 'layui-btn layui-btn-disabled', type: 'button' }).text('已接受')
+                )
+              )
+            case 'REFUSE':
+              return $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs12', style: 'text-align: center;' }).html(
+                  $('<button/>').attr({ class: 'layui-btn layui-bg-red layui-btn-disabled', type: 'button' }).text('已拒绝')
+                )
+              )
+            case 'WAIT':
+            default:
+              return $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs4' }).html(
+                  $('<button/>').attr({ class: 'layui-btn accept-btn', type: 'button', style: 'float:right;' }).text('接受').data('msg-id', messageID).data('target-id', targetID)
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs4', style: 'text-align: center;' }).html(
+                  $('<button/>').attr({ class: 'layui-btn refuse-btn layui-bg-red', type: 'button' }).text('拒绝').data('msg-id', messageID).data('target-id', targetID)
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs4' }).html(
+                  $('<button/>').attr({ class: 'layui-btn ignore-btn layui-bg-gray', type: 'button' }).text('忽略').data('msg-id', messageID).data('target-id', targetID)
+                )
+              )
+          }
+        })()
+      )
+    )
+  )
+  return tmp.html()
+}
+
+function openSearchFriendPanel (data) {
+  return parent.layer.open({
+    type: 1,
+    title: '查找好友',
+    content: '',
+    id: 'searchFriendPanel',
+    area: ['560px', '300px'],
+    success: function (layero, index) {
+      console.log($(layero))
+      var panel = $(layero).children('#searchFriendPanel')
+      data.forEach((item) => {
+        if (item.avatar == null || item.avatar === '@DEFAULT?') {
+          item.avatar = 'assets/images/1.png'
+        }
+        panel.append(userMethod.newAddFriendDom(item))
+      })
+      panel.on('click', '.chatBtn', function (event) {
+        var targetID = $(this).parents('.user:first').attr('id').substr(1)
+        parent.layer.close(index)
+        openWindow(targetID)
+        console.log('好友聊天')
+      })
+      panel.on('click', '.addFriendBtn', function (event) {
+        var targetID = $(this).parents('.user:first').attr('id').substr(1)
+        openAddFriendRequestPanel(targetID)
+      })
+    }
+  })
+}
+
+function openAddFriendRequestPanel (targetID) {
+  var addFriendRequestPanelIndex = parent.layer.open({
+    type: 1,
+    id: 'addFriendRequest',
+    title: '添加好友',
+    content: createAddFriendRequestPanelContent(targetID),
+    area: '500px',
+    shadeClose: false,
+    resize: true,
+    success: function (layero, index) {
+      parent.layui.form.render()
+      parent.$('#addFriendRequest').on('click', '#cancel', function () {
+        parent.layer.close(addFriendRequestPanelIndex)
+      })
+      parent.layui.form.on('submit(addFriendRequestBox)', function (data) {
+        console.log(data)
+        data.field.content = data.field.content.trim()
+        waitMethod.start('提交中')
+        $.ajax({
+          type: 'POST',
+          url: api.addFriend,
+          data: { content: JSON.stringify({ groupID: data.field.group, message: data.field.content }), targetID: targetID },
+          dataType: 'json',
+          xhrFields: {
+            withCredentials: true
+          },
+          success: function (data) {
+            waitMethod.end()
+            warpResponseData(data, (data) => {
+              parent.layer.msg('发送成功')
+            })
+          },
+          error: ajaxError
+        })
+        parent.layer.close(addFriendRequestPanelIndex)
+        return false
+      })
+    }
+  })
+}
+
+function createAddFriendRequestPanelContent (targetID) {
+  var tmp = $('<div/>')
+  tmp.append($('<form/>').attr({ class: 'layui-form', 'lay-filter': 'addFriendForm', action: '##', onsubmit: 'return false', method: 'post' }).append(
+    $('<div/>').attr({ class: 'layui-form-item' }).html(
+      $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('性别')
+    ).append(
+      $('<div/>').attr({ class: 'layui-input-block fullselect' }).html(
+        (() => {
+          var select = $('<select/>').attr({ name: 'group' })
+          console.log(groupMethod.groupListData)
+          groupMethod.groupListData.forEach(function (group, groupID) {
+            console.log(group)
+            select.append($('<option/>').attr(groupID === -parent.selfData.userID ? { value: groupID, select: '' } : { value: groupID }).text(group.groupName))
+          })
+          return select
+        })()
+      )
+    )).append(
+    $('<div/>').attr({ class: 'layui-form-item layui-form-text' }).html(
+      $('<label/>').attr({ class: 'layui-form-label cs-form-label' }).text('验证信息')).append(
+      $('<div/>').attr({ class: 'layui-input-block' }).html(
+        $('<textarea/>').attr({ name: 'content', class: 'layui-textarea' })))).append(
+    $('<div/>').attr({ class: 'layui-form-item' }).html(
+      $('<div/>').attr({ class: 'layui-input-block noborder' }).html(
+        $('<button/>').attr({ class: 'layui-btn', id: 'submit', type: 'submit', 'lay-submit': '', 'lay-filter': 'addFriendRequestBox' }).text('提交')
+      ).append(
+        $('<button/>').attr({ class: 'layui-btn', id: 'cancel', type: 'button' }).text('取消')
+      ))
+  )
+  )
+  return tmp.html()
+}
+
 function openWindow (userID) {
-  uiMethod.MessageDot.hideUser(userID)
   parent.createWindow(userMethod.userListData.get(userID))
 }
 
@@ -630,9 +1233,10 @@ function getGroupList () {
  * @returns true when forward function success and flush success
  */
 async function flushGroupList () {
-  const data = await getGroupList()
-  console.log(getGroupList())
+  var data
   try {
+    data = await getGroupList()
+    console.log(data)
   } catch (ajaxErrorStatus) {
     ajaxError(ajaxErrorStatus)
     return false
@@ -641,7 +1245,7 @@ async function flushGroupList () {
     responseError(data.msg)
     return false
   }
-  $.each(data.data, function (index, item) {
+  data.data.forEach((item) => {
     groupMethod.addOrRefresh(item)
     uiMethod.addGroup(groupMethod.newGroup(item))
   })
@@ -683,11 +1287,13 @@ async function flushFriendList () {
     responseError(data.msg)
     return false
   }
-  $.each(data.data, function (index, item) {
+  data.data.forEach(async (item) => {
     console.log(item)
-    userMethod.getUser(item.userID, (data) => {
-      userMethod.addOrRefreshUser(data)
-      groupMethod.addFriendInGroup(userMethod.newFriendDom(data), item.userGroupID)
+    var userData = userMethod.getUser(item.userID)
+    warpResponseData(userData, (user) => {
+      userMethod.addOrRefreshUser(user)
+      console.log(item)
+      groupMethod.addFriendInGroup(userMethod.newFriendDom(user), item.userGroupID)
     })
   })
   return true
@@ -703,7 +1309,7 @@ function ajaxError (jqXHR, textStatus, errorThrown) {
 }
 
 function responseError (msg) {
-  parent.layui.msg('错误:' + msg)
+  parent.layer.msg('错误:' + msg)
 }
 
 /**
@@ -715,8 +1321,9 @@ function responseError (msg) {
 function warpResponseData (data, callback) {
   if (data.code !== 0) {
     responseError(data.msg)
+  } else {
+    if (callback) { console.log(data); return callback(data.data) }
   }
-  if (callback) { return callback(data.data) }
 }
 
 /**
@@ -765,13 +1372,133 @@ function createUploadFormDOM (selfData) {
   return tmp.html()
 }
 
+/**
+ * @description 创建用户信息窗
+ * @param {Object} targetID 用户ID
+ */
+function createUserInfomationPanelDOM (targetID) {
+  var userData = userMethod.getUser(targetID)
+  if (userData.code !== 0) {
+    responseError(userData.msg)
+    return ''
+  }
+  const user = userData.data
+  console.log(user)
+  var tmp = $('<div/>')
+  tmp.append(
+    $('<div/>').attr({ class: 'layui-row infodetail' }).append(
+      $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+        $('<img/>').attr({ class: 'box-my-pic', src: user.avatar })
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs9 padding-10' }).html(
+        $('<div/>').attr({ class: 'layui-row' }).append(
+          $('<div/>').attr({ class: 'layui-col-xs12' }).append(
+            $('<span>').attr({ class: 'title-label' }).text('昵称:')
+          ).append(
+            $('<span>').attr({ class: 'nickname' }).text(user.nickname)
+          )
+        ).append(
+          $('<div/>').attr({ class: 'layui-col-xs12' }).append(
+            $('<span>').attr({ class: 'title-label' }).text('性别:')
+          ).append(
+            (() => {
+              switch (user.sex) {
+                case '@PRIVATE?':
+                  return $('<i/>').attr({ class: 'iconfont layui-extend-zhongxing my_iconfont sexicon', title: '未公开' })
+                case '男':
+                  return $('<i/>').attr({ class: 'layui-icon layui-icon-male my_iconfont sexicon', title: '男' })
+                case '女':
+                  return $('<i/>').attr({ class: 'layui-icon layui-icon-female my_iconfont sexicon', title: '女' })
+                default:
+                  return $('<i/>').attr({ class: 'iconfont layui-extend-zhongxing my_iconfont sexicon', title: '未知' })
+              }
+            })()
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+        $('<div/>').attr({ class: 'layui-row layui-col-space5' }).html(
+          $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+            $('<div/>').attr({ class: 'border' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+                  $('<i/>').attr({ class: 'iconfont layui-extend-youxiang my_iconfont emailicon mt-5', title: '邮箱' })
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs9', style: 'float:right' }).html(
+                  $('<div/>').attr({ class: 'infobox' }).html(
+                    $('<span/>').text(user.email === '@PRIVATE?' ? '私密' : user.email)
+                  )
+                )
+              )
+            )
+          )
+        ).append(
+          $('<div/>').attr({ class: 'layui-col-xs6' }).html(
+            $('<div/>').attr({ class: 'border' }).html(
+              $('<div/>').attr({ class: 'layui-row' }).append(
+                $('<div/>').attr({ class: 'layui-col-xs3' }).html(
+                  $('<i/>').attr({ class: 'layui-icon layui-icon-cellphone my_iconfont phoneicon mt-5', title: '电话' })
+                )
+              ).append(
+                $('<div/>').attr({ class: 'layui-col-xs9', style: 'float:right' }).html(
+                  $('<div/>').attr({ class: 'infobox' }).html(
+                    $('<span/>').text(user.phoneNumber === '@PRIVATE?' ? '私密' : (user.phoneNumber === null || user.phoneNumber === '' ? '未知' : user.phone))
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    ).append(
+      $('<div/>').attr({ class: 'layui-col-xs12' }).html(
+        $('<div/>').attr({ class: 'border' }).html(
+          $('<div/>').attr({ class: 'layui-row' }).append(
+            $('<div/>').attr({ class: 'layui-col-xs1 sigicon' }).html(
+              $('<i/>').attr({ class: 'layui-icon layui-icon-note my_iconfont', title: '个性签名' })
+            )
+          ).append(
+            $('<div/>').attr({ class: 'layui-col-xs10' }).html(
+              $('<div/>').attr({ class: 'sig' }).html(
+                $('<span/>').text(user.signature)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+  return tmp.html()
+}
+
 function updateSelfData (data) {
   parent.updateSelfData(data)
   $('#self-signature').text(data.signature || '')
 }
 
 function receive (message) {
+  console.log(message)
+  console.log(message.fromID)
+  var targetid = message.fromID === parent.selfData.userID ? message.toID : message.fromID
+  console.log(`receive the message:[${message.content}] by message id:[${message.messageID}]`)
   if (!parent.ChatBoxMap.hasOpen(message.fromID)) {
+    console.log('notOpen')
     uiMethod.MessageDot.showUser(message.fromID)
+  } else {
+    var chatBox = parent.ChatBoxMap.getWindow(targetid)
+    console.log(chatBox)
+    chatBox.receive(message)
   }
+  console.log(message)
+  if (message.action === 'PRIVATE_CHAT_MESSAGE') {
+    console.log(message)
+    parent.actionMessagePool.addMessage(targetid, message)
+  }
+  messageMethod.addOrRefreshMessage(message)
+  userMethod.checkUserData(targetid, function (user) {
+    $('#newMsgContent').append(messageMethod.newFriendMsgDom(user, message))
+  })
 }

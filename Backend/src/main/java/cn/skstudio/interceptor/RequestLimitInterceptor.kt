@@ -1,12 +1,12 @@
-package cn.skstudio.config.web
+package cn.skstudio.interceptor
 
 import cn.skstudio.annotation.RequestLimit
 import cn.skstudio.config.system.StartupConfig
 import cn.skstudio.exception.ServiceErrorEnum
-import cn.skstudio.local.utils.LocalConfig
-import cn.skstudio.local.utils.ResponseDataUtils
+import cn.skstudio.service.impl.RedisServiceImpl
 import cn.skstudio.utils.IP
 import org.apache.logging.log4j.LogManager
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse
  *@author: Kairlec
  *@create: 2020-02-27 13:10
  */
+
 @Component
 class RequestLimitInterceptor : HandlerInterceptor {
     companion object {
@@ -30,8 +31,14 @@ class RequestLimitInterceptor : HandlerInterceptor {
         ))
     }
 
+    @Autowired
+    private lateinit var startupConfig: StartupConfig
+
+    @Autowired
+    private lateinit var redisService: RedisServiceImpl
+
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        if (!StartupConfig.redisEnabled) {
+        if (!startupConfig.redisEnabled) {
             return true
         }
         if (handler is HandlerMethod) {
@@ -46,20 +53,21 @@ class RequestLimitInterceptor : HandlerInterceptor {
             logger.info("ip=$ip")
             logger.info("uri=$uri")
             logger.info("key=$key")
-            val count = LocalConfig.redisService[key] as? Int
+            val count = redisService[key] as? Int
             logger.info("请求次数:$count")
             when {
                 count == null -> {
-                    LocalConfig.redisService[key, seconds, TimeUnit.SECONDS] = 1
+                    redisService[key, seconds, TimeUnit.SECONDS] = 1
                 }
                 count < maxCount -> {
-                    logger.info("过期时间:" + LocalConfig.redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
-                    LocalConfig.redisService.update(key, count + 1)
+                    logger.info("过期时间:" + redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
+                    redisService.update(key, count + 1)
                 }
                 else -> {
                     logger.warn(""""拦截到"$ip"对"$uri"的异常连续访问""")
+                    response.contentType = "application/json;charset=UTF-8"
                     response.writer.write(ServiceErrorEnum.REQUEST_FORBIDDEN.json)
-                    logger.info("过期时间:" + LocalConfig.redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
+                    logger.info("过期时间:" + redisService.getExpire(key, TimeUnit.SECONDS) + "秒")
                     return false
                 }
             }

@@ -1,4 +1,4 @@
-package cn.skstudio.controller.group
+package cn.skstudio.interceptor
 
 /**
  * @author: Kairlec
@@ -6,7 +6,6 @@ package cn.skstudio.controller.group
  * @description: 管理员接口拦截器
  */
 import cn.skstudio.local.utils.RequestAuthenticator
-import cn.skstudio.local.utils.ResponseDataUtils
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
 import java.util.*
@@ -20,6 +19,7 @@ class GroupInterceptor : HandlerInterceptor {
         return if (error.ok) {
             true
         } else {
+            response.contentType = "application/json;charset=UTF-8"
             response.writer.write(error.json)
             false
         }

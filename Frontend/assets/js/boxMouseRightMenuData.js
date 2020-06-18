@@ -5,17 +5,18 @@ function getBlankData () {
   ]
 }
 
-function getGroupData (groupID) {
+function getGroupData (groupData) {
   return [
-    { data: groupID, type: 1, title: uiMethod.GroupPand.isExpanded(groupID) ? '缩起' : '展开' },
-    { data: groupID, type: 2, title: '重命名' },
-    { data: groupID, type: 3, title: '删除分组' }
+    { data: groupData, type: 1, title: uiMethod.GroupPand.isExpanded(groupData.id) ? '缩起' : '展开' },
+    { data: groupData, type: 2, title: '重命名' },
+    { data: groupData, type: 3, title: '删除分组' }
   ]
 }
 
 function getUserData (userID) {
   return [
     { data: userID, type: 1, title: '打开会话' },
-    { data: userID, type: 2, title: '删除好友' }
+    { data: userID, type: 2, title: '删除好友' },
+    { data: userID, type: 3, title: '查看资料' }
   ]
 }

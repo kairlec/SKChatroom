@@ -3,7 +3,14 @@
 <mapper namespace="cn.skstudio.dao.FriendGroupMapper">
 
     <update id="initialize">
-        CREATE TABLE IF NOT EXISTS friend_group(group_id BIGINT NOT NULL PRIMARY KEY,group_order INT NOT NULL,user_id BIGINT NOT NULL,FOREIGN KEY(user_id) REFERENCES user(user_id),group_name VARCHAR(12) NOT NULL);
+        CREATE TABLE IF NOT EXISTS friend_group
+        (
+            group_id    BIGINT      NOT NULL PRIMARY KEY,
+            group_order INT         NOT NULL,
+            user_id     BIGINT      NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES user (user_id),
+            group_name  VARCHAR(12) NOT NULL
+        );
     </update>
 
     <select id="getUserGroup" resultType="cn.skstudio.pojo.Group">
@@ -19,8 +26,8 @@
     </select>
 
     <insert id="addGroup" parameterType="cn.skstudio.pojo.Group">
-        INSERT INTO friend_group(group_id,group_order,user_id,group_name)
-        VALUES(#{groupID},#{groupOrder},#{userID},#{groupName})
+        INSERT INTO friend_group(group_id, group_order, user_id, group_name)
+        VALUES (#{groupID}, #{groupOrder}, #{userID}, #{groupName})
     </insert>
 
     <update id="updateGroup" parameterType="cn.skstudio.pojo.Group">
@@ -38,7 +45,8 @@
     </update>
 
     <delete id="deleteGroup">
-        DELETE FROM friend_group
+        DELETE
+        FROM friend_group
         WHERE group_id = #{groupID}
     </delete>
 

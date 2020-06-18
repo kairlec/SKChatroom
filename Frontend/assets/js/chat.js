@@ -27,45 +27,80 @@ $('#closeBtn').on('click', function (enevt) {
 })
 
 $('#sendBtn').on('click', function (event) {
-  var context = $('#chat-text').val()
+  var content = $('#chat-text').val()
   parent.websocket.send({
     toID: window.totalUserID,
     typeCode: 2,
-    content: context
+    content: content
   })
   parent.actionMessagePool.addMessage(window.totalUserID, {
     action: 'PRIVATE_CHAT_MESSAGE',
-    context: context,
+    content: content,
     toID: window.totalUserID
   })
-  uiMethod.addRightMsg(context)
+  uiMethod.addRightMsg(content)
+  $('#content').scrollTop($('#content').prop('scrollHeight'))
   $('#chat-text').val('')
 })
 
 function receive (message) {
   console.log(message)
-  uiMethod.addLeftMsg(message.context)
+  uiMethod.addLeftMsg(message.content)
+  $('#content').scrollTop($('#content').prop('scrollHeight'))
+  $.ajax({
+    type: 'POST',
+    url: api.readMessage,
+    dataType: 'json',
+    data: { ids: message.messageID },
+    xhrFields: {
+      withCredentials: true
+    }
+  })
 }
 
 function ready () {
   console.log(window.totalUserID)
   var messages = parent.actionMessagePool.getMessage(window.totalUserID)
   console.log(messages)
-  $.each(messages, function (index, item) {
-    if (item.action === 'PRIVATE_CHAT_MESSAGE') {
-      if (item.toID === window.totalUserID) {
-        uiMethod.addRightMsg(item.context)
+  var messageids = []
+  var messagearr = []
+  messages.forEach(function (message, index) {
+    if (message.action === 'PRIVATE_CHAT_MESSAGE') {
+      if (message.toID === window.totalUserID) {
+        messagearr.push({ type: 'right', content: message.content, time: message.time })
       } else {
-        uiMethod.addLeftMsg(item.context)
-        $.ajax({
-          type: 'POST',
-          url: api.readMessage + item.messageID,
-          dataType: 'json',
-          xhrFields: {
-            withCredentials: true
-          }
-        })
+        messagearr.push({ type: 'left', content: message.content, time: message.time })
+        if (!message.isRead) {
+          messageids.push(message.messageID)
+        }
       }
     }
   })
+  messagearr.sort(function (a, b) {
+    if (a.time > b.time) {
+      return 1
+    }
+    if (a.time < b.time) {
+      return -1
+    }
+    return 0
+  })
+  messagearr.forEach(function (item) {
+    if (item.type === 'left') {
+      uiMethod.addLeftMsg(item.content)
+    } else {
+      uiMethod.addRightMsg(item.content)
+    }
+  })
+  $('#content').scrollTop($('#content').prop('scrollHeight'))
+  $.ajax({
+    type: 'POST',
+    url: api.readMessage,
+    dataType: 'json',
+    data: { ids: messageids.join(';') },
+    xhrFields: {
+      withCredentials: true
+    }
+  })
+  parent.getMainBoxWindow().uiMethod.MessageDot.hideUser(window.totalUserID)
 }

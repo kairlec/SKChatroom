@@ -3,16 +3,38 @@ package cn.skstudio.service.impl
 import cn.skstudio.dao.ActionMessageMapper
 import cn.skstudio.pojo.ActionMessage
 import cn.skstudio.service.ActionMessageService
+import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.SpringApplication
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import java.lang.Exception
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import javax.annotation.PostConstruct
+import kotlin.system.exitProcess
 
 @Service
 class ActionMessageServiceImpl : ActionMessageService {
+    companion object {
+        private val logger = LogManager.getLogger(ActionMessageServiceImpl::class.java)
+    }
+
     @Autowired
     private lateinit var actionMessageMapper: ActionMessageMapper
+
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
+    @PostConstruct
+    fun init() {
+        if (initialize() == null) {
+            logger.fatal("Init database table [ActionMessage] failed")
+            exitProcess(SpringApplication.exit(applicationContext))
+        } else {
+            logger.info("Init database table [ActionMessage] success")
+        }
+    }
 
     override fun initialize(): Int? {
         return try {
@@ -44,6 +66,15 @@ class ActionMessageServiceImpl : ActionMessageService {
     override fun getAllToActionMessage(userID: Long, after: LocalDateTime): List<ActionMessage>? {
         return try {
             actionMessageMapper.getAllToActionMessages(userID, Timestamp.valueOf(after))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun getAllRelatedActionMessage(userID: Long, after: LocalDateTime): List<ActionMessage>? {
+        return try {
+            actionMessageMapper.getAllRelatedActionMessages(userID, Timestamp.valueOf(after))
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -95,17 +126,13 @@ class ActionMessageServiceImpl : ActionMessageService {
         }
     }
 
-    override fun read(messageID: Long): Int? {
+    override fun read(userID: Long, ids: List<Long>): Int? {
         return try {
-            actionMessageMapper.read(messageID)
+            actionMessageMapper.read(userID, ids)
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
-    }
-
-    override fun read(message: ActionMessage): Int? {
-        return read(message.messageID)
     }
 
 }

@@ -3,13 +3,39 @@ package cn.skstudio.service.impl
 import cn.skstudio.dao.FriendGroupMapper
 import cn.skstudio.pojo.Group
 import cn.skstudio.service.FriendGroupService
+import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.SpringApplication
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
+import javax.annotation.PostConstruct
+import kotlin.system.exitProcess
 
 @Service
-class FriendGroupServiceImpl : FriendGroupService {
+open class FriendGroupServiceImpl : FriendGroupService {
+    companion object {
+        private val logger = LogManager.getLogger(FriendGroupServiceImpl::class.java)
+    }
+
+    //前置注入
+    @Autowired
+    private lateinit var userServiceImpl: UserServiceImpl
+
     @Autowired
     private lateinit var friendGroupMapper: FriendGroupMapper
+
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
+    @PostConstruct
+    fun init() {
+        if (initialize() == null) {
+            logger.fatal("Init database table [FriendGroup] failed")
+            exitProcess(SpringApplication.exit(applicationContext))
+        }else {
+            logger.info("Init database table [FriendGroup] success")
+        }
+    }
 
     override fun initialize(): Int? {
         return try {

@@ -3,7 +3,17 @@
 <mapper namespace="cn.skstudio.dao.MailSenderMapper">
 
     <update id="initializeTable">
-        CREATE TABLE IF NOT EXISTS mail_sender_config(id INT1 NOT NULL PRIMARY KEY,port INT NOT NULL,host VARCHAR(256) NOT NULL,protocol VARCHAR(32) NOT NULL,encoding VARCHAR(16) NOT NULL,username VARCHAR(64) NOT NULL,password VARCHAR(64) NOT NULL,enable BOOLEAN NOT NULL);
+        CREATE TABLE IF NOT EXISTS mail_sender_config
+        (
+            id INT1 NOT NULL PRIMARY KEY,
+            port     INT          NOT NULL,
+            host     VARCHAR(256) NOT NULL,
+            protocol VARCHAR(32)  NOT NULL,
+            encoding VARCHAR(16)  NOT NULL,
+            username VARCHAR(64)  NOT NULL,
+            password VARCHAR(64)  NOT NULL,
+            enable   BOOLEAN      NOT NULL
+        );
     </update>
 
     <select id="getMailSender" resultType="cn.skstudio.pojo.MailSender">
@@ -13,7 +23,17 @@
     </select>
 
     <insert id="initializeSender" parameterType="cn.skstudio.pojo.MailSender">
-        INSERT INTO mail_sender_config(id,port,host,protocol,encoding,username,password,enable) SELECT 1,#{port},#{host},#{protocol},#{encoding},#{username},#{password},#{enable} FROM DUAL WHERE NOT EXISTS(SELECT id FROM mail_sender_config WHERE id = 1);
+        INSERT INTO mail_sender_config(id, port, host, protocol, encoding, username, password, enable)
+        SELECT 1,
+               #{port},
+               #{host},
+               #{protocol},
+               #{encoding},
+               #{username},
+               #{password},
+               #{enable}
+        FROM DUAL
+        WHERE NOT EXISTS(SELECT id FROM mail_sender_config WHERE id = 1);
     </insert>
 
     <update id="updateMailSender" parameterType="cn.skstudio.pojo.MailSender">
@@ -30,16 +50,16 @@
                 protocol = #{protocol},
             </if>
             <if test="encoding != null">
-            encoding = #{encoding},
+                encoding = #{encoding},
             </if>
             <if test="username != null">
-            username = #{username},
+                username = #{username},
             </if>
             <if test="password != null">
-            password = #{password},
+                password = #{password},
             </if>
             <if test="enable != null">
-            enable = #{enable}
+                enable = #{enable}
             </if>
         </set>
         WHERE id = 1

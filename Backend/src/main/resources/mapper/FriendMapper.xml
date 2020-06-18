@@ -3,7 +3,18 @@
 <mapper namespace="cn.skstudio.dao.FriendMapper">
 
     <update id="initialize">
-        CREATE TABLE IF NOT EXISTS friend(user_id BIGINT NOT NULL,FOREIGN KEY(user_id) REFERENCES user(user_id),friend_id BIGINT NOT NULL,FOREIGN KEY(friend_id) REFERENCES user(user_id),user_group_id BIGINT NOT NULL, FOREIGN KEY(user_group_id) REFERENCES friend_group(group_id),friend_group_id BIGINT NOT NULL, FOREIGN KEY(friend_group_id) REFERENCES friend_group(group_id))
+        CREATE TABLE IF NOT EXISTS friend
+        (
+            user_id         BIGINT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES user (user_id),
+            friend_id       BIGINT NOT NULL,
+            FOREIGN KEY (friend_id) REFERENCES user (user_id),
+            user_group_id   BIGINT NOT NULL,
+            FOREIGN KEY (user_group_id) REFERENCES friend_group (group_id),
+            friend_group_id BIGINT NOT NULL,
+            FOREIGN KEY (friend_group_id) REFERENCES friend_group (group_id),
+            PRIMARY KEY (user_id,friend_id)
+        )
     </update>
 
     <select id="getFriendList" resultType="cn.skstudio.pojo.Friend">
@@ -17,25 +28,27 @@
     </select>
 
     <insert id="addFriend">
-        INSERT INTO friend(user_id,friend_id,user_group_id,friend_group_id)
-        VALUES(#{userID},#{friendID},#{userGroupID},#{friendGroupID})
+        INSERT INTO friend(user_id, friend_id, user_group_id, friend_group_id)
+        VALUES (#{userID}, #{friendID}, #{userGroupID}, #{friendGroupID})
     </insert>
 
     <update id="moveFriend">
         UPDATE friend
         <set>
-            user_group_id = #{GroupID}
+            user_group_id = #{groupID}
         </set>
         WHERE user_id = #{userID} AND friend_id = #{friendID};
         UPDATE friend
         <set>
-            friend_group_id = #{GroupID}
+            friend_group_id = #{groupID}
         </set>
         WHERE friend_id = #{userID} AND user_id = #{friendID};
     </update>
 
     <delete id="deleteFriend">
-        DELETE FROM friend
-        WHERE (user_id = #{userID} AND friend_id = #{friendID}) OR (friend_id = #{userID} AND user_id = #{friendID})
+        DELETE
+        FROM friend
+        WHERE (user_id = #{userID} AND friend_id = #{friendID})
+           OR (friend_id = #{userID} AND user_id = #{friendID})
     </delete>
 </mapper>

@@ -1,7 +1,7 @@
 var rootAPI = (() => {
-  var host = window.location.protocol + '//' + window.location.hostname + ':8320'
+  var host = window.location.protocol + '//' + window.location.hostname + ':18320'
   return {
     host: host,
-    webSocket: 'ws://' + window.location.hostname + ':8320/api/msg'
+    webSocket: 'ws://' + window.location.hostname + ':18320/api/msg'
   }
 })()

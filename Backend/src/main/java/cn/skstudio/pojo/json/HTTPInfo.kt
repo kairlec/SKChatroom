@@ -1,7 +1,7 @@
 package cn.skstudio.pojo.json
 
-import cn.skstudio.local.utils.LocalConfig.Companion.toJSON
 import cn.skstudio.utils.IP
+import cn.skstudio.utils.toJSON
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.net.URLDecoder

@@ -7,9 +7,11 @@ package cn.skstudio.config.web
  *@create: 2020-02-21 16:48
  */
 import cn.skstudio.config.system.StartupConfig
-import cn.skstudio.controller.admin.AdminInterceptor
-import cn.skstudio.controller.group.GroupInterceptor
-import cn.skstudio.controller.user.UserInterceptor
+import cn.skstudio.interceptor.AdminInterceptor
+import cn.skstudio.interceptor.GroupInterceptor
+import cn.skstudio.interceptor.RequestLimitInterceptor
+import cn.skstudio.interceptor.UserInterceptor
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.converter.HttpMessageConverter
@@ -23,6 +25,10 @@ import java.nio.charset.StandardCharsets
 
 @Configuration
 open class WebConfig : WebMvcConfigurer {
+
+    @Autowired
+    private lateinit var startupConfig: StartupConfig
+
     /**
      * 设置响应的字符编码
      * @return HttpMessageConverter
@@ -48,7 +54,7 @@ open class WebConfig : WebMvcConfigurer {
     }
 
     @Bean
-    open fun requestInterceptorMaker():RequestLimitInterceptor{
+    open fun requestInterceptorMaker(): RequestLimitInterceptor {
         return RequestLimitInterceptor()
     }
 
@@ -71,8 +77,8 @@ open class WebConfig : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
                 .allowedMethods("GET", "POST", "OPTIONS")
-                .allowedOrigins(*StartupConfig.allowedOrigins)
-                .allowedHeaders("x-requested-with","content-type", *StartupConfig.allowedHeaders)
+                .allowedOrigins(*startupConfig.allowedOrigins)
+                .allowedHeaders("x-requested-with","content-type", *startupConfig.allowedHeaders)
                 .allowCredentials(true)
                 .maxAge(86400)
     }

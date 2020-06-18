@@ -1,6 +1,6 @@
 package cn.skstudio.pojo
 
-import cn.skstudio.controller.websocket.WebSocketHandler
+import cn.skstudio.controller.WebSocketHandler
 import org.apache.logging.log4j.LogManager
 
 data class GuestUser(

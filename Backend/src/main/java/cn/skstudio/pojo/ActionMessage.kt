@@ -1,8 +1,12 @@
 package cn.skstudio.pojo
 
 import cn.skstudio.annotation.NoArg
-import cn.skstudio.config.static.StaticConfig
+import cn.skstudio.config.system.StaticConfig
 import cn.skstudio.utils.SnowFlake
+import cn.skstudio.utils.TimestampDeserializer
+import cn.skstudio.utils.TimestampSerializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
@@ -12,9 +16,11 @@ data class ActionMessage(
         var action: ActionTypeEnum,//消息类型
         var fromID: Long,//发送者ID
         var toID: Long,//接受者ID
+        @JsonSerialize(using = TimestampSerializer::class)
+        @JsonDeserialize(using = TimestampDeserializer::class)
         var time: Timestamp,//消息时间
         var topic: String?,//主题
-        var context: String,//消息内容
+        var content: String,//消息内容
         var isRead: Boolean//已读
 ) {
 

@@ -9,12 +9,24 @@
         <result column="to_id" property="toID"/>
         <result column="time" property="time"/>
         <result column="topic" property="topic"/>
-        <result column="context" property="context"/>
+        <result column="content" property="content"/>
         <result column="is_read" property="isRead"/>
     </resultMap>
 
     <update id="initialize">
-        CREATE TABLE IF NOT EXISTS action_message(message_id BIGINT NOT NULL PRIMARY KEY,action_type VARCHAR(32) NOT NULL,from_id BIGINT NOT NULL, FOREIGN KEY(from_id) REFERENCES user(user_id),to_id BIGINT NOT NULL, FOREIGN KEY(to_id) REFERENCES user(user_id),time DATETIME NOT NULL,topic VARCHAR(128),context NVARCHAR(1024) NOT NULL,is_read BOOL NOT NULL);
+        CREATE TABLE IF NOT EXISTS action_message
+        (
+            message_id  BIGINT         NOT NULL PRIMARY KEY,
+            action_type VARCHAR(32)    NOT NULL,
+            from_id     BIGINT         NOT NULL,
+            FOREIGN KEY (from_id) REFERENCES user (user_id),
+            to_id       BIGINT         NOT NULL,
+            FOREIGN KEY (to_id) REFERENCES user (user_id),
+            time        DATETIME       NOT NULL,
+            topic       VARCHAR(128),
+            content     NVARCHAR(1024) NOT NULL,
+            is_read     BOOL           NOT NULL
+        );
     </update>
 
     <select id="get" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
@@ -27,41 +39,50 @@
         SELECT *
         FROM action_message
         WHERE from_id = #{userID}
-        AND time >= #{after}
+          AND time >= #{after}
     </select>
 
-    <select id="getAllUnreadFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
+    <select id="getAllRelatedActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
+        SELECT *
+        FROM action_message
+        WHERE (from_id = #{userID}
+           OR to_id = #{userID})
+            AND time >= #{after}
+    </select>
+
+    <select id="getAllUnreadFromActionMessages" resultType="cn.skstudio.pojo.ActionMessage"
+            resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE from_id = #{userID}
-        AND is_read = false
+          AND is_read = false
     </select>
 
     <select id="getAllToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE to_id = #{userID}
-        AND time >= #{after}
+          AND time >= #{after}
     </select>
 
     <select id="getAllUnreadToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE to_id = #{userID}
-        AND is_read = false
+          AND is_read = false
     </select>
 
     <select id="getFromToActionMessages" resultType="cn.skstudio.pojo.ActionMessage" resultMap="ActionMessageMap">
         SELECT *
         FROM action_message
         WHERE from_id = #{fromUserID}
-        AND to_id = #{toUserID}
-        AND time >= #{after}
+          AND to_id = #{toUserID}
+          AND time >= #{after}
     </select>
 
     <insert id="addActionMessage" parameterType="cn.skstudio.pojo.ActionMessage">
-        INSERT INTO action_message(message_id,action_type,from_id,to_id,time,topic,context,is_read)
-         VALUES(#{messageID},#{action},#{fromID},#{toID},#{time},#{topic},#{context},#{isRead})
+        INSERT INTO action_message(message_id, action_type, from_id, to_id, time, topic, content, is_read)
+        VALUES (#{messageID}, #{action}, #{fromID}, #{toID}, #{time}, #{topic}, #{content}, #{isRead})
     </insert>
 
     <update id="updateContent">
@@ -70,7 +91,9 @@
         <set>
             content = #{content}
         </set>
-        WHERE message_id = #{messageID}
+        <where>
+            message_id = #{messageID}
+        </where>
     </update>
 
     <update id="read">
@@ -79,7 +102,13 @@
         <set>
             is_read = true
         </set>
-        WHERE message_id = #{messageID}
+        <where>
+            to_id = #{userID}
+            AND message_id IN
+            <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </where>
     </update>
 
 </mapper>

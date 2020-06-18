@@ -1,4 +1,4 @@
-package cn.skstudio.controller.websocket
+package cn.skstudio.interceptor
 
 
 import cn.skstudio.local.utils.RequestAuthenticator
@@ -17,13 +17,12 @@ class WebSocketInterceptor : HttpSessionHandshakeInterceptor() {
     }
 
     override fun beforeHandshake(request: ServerHttpRequest, response: ServerHttpResponse, wsHandler: WebSocketHandler, attributes: MutableMap<String, Any>): Boolean {
-        logger.debug("WebSocket拦截器启动")
         if (request is ServletServerHttpRequest) {
-            logger.debug("WebSocket拦截器请求类型匹配成功")
             val session = request.servletRequest.session
             val error = RequestAuthenticator.authHttpSession(session)
             if (error.bad) {
                 if (response is ServletServerHttpResponse) {
+                    response.servletResponse.contentType = "application/json;charset=UTF-8"
                     response.servletResponse.writer.write(error.json)
                 }
                 return false

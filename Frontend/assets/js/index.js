@@ -26,6 +26,7 @@ var ChatBoxMap = {
     return this.mp.has(userID)
   },
   addWindow: function (userID, index) {
+    console.log(`add Window:[${userID}]`)
     this.mp.set(userID, index)
   },
   closeID: function (userID) {
@@ -55,9 +56,10 @@ var ChatBoxMap = {
     console.log(message)
     if (!this.hasOpen(userID)) {
       console.log(userID + 'is not open')
-      return
+      return false
     }
     this.getWindow(userID).receive(message)
+    return true
   },
   remove: function (userID) {
     this.mp.delete(userID)
@@ -94,7 +96,7 @@ function start () {
       }
       layer.close(waitIndex)
       selfData = data.data
-      if (selfData.avatar == null || selfData.avatar === '@DEFAULT') {
+      if (selfData.avatar === null || selfData.avatar === '@DEFAULT') {
         selfData.avatar = 'assets/images/1.png'
       }
       chatBoxIndex = layer.open({
@@ -180,7 +182,9 @@ function createWindow (user) {
       console.log(ChatBoxMap)
     },
     resizing: function (layero) {
-      var index = ChatBoxMap.get($(this).attr('id'))
+      console.log(layero)
+      var index = ChatBoxMap.mp.get($(this).attr('id').substr(1))
+      console.log(`index = ${index}`)
       layero.height(function (n, c) {
         var minHeight = parseInt(layero.css('min-height'))
         if (c < minHeight) {
@@ -188,10 +192,13 @@ function createWindow (user) {
         }
         return c
       })
+      console.log(layero.find('iframe'))
       layero.find('iframe').height(layero.height() - layero.find('.layui-layer-title').height())
       var body = layer.getChildFrame('body', index)
+      console.log(body)
       var bodyHeight = parseInt(body.children('.chat-body').height())
       var contentBox = body.find('#content')
+      console.log(contentBox)
       contentBox.height(bodyHeight - 180)
       contentBox.find('.msgContent').css('max-width', (parseInt(contentBox.width()) - 132) + 'px')
     },
@@ -224,12 +231,11 @@ function updateSelfData (data) {
 var actionMessagePool = {
   mp: new Map(),
   addMessage: function (targetID, message) {
-    var array = this.mp.get(targetID)
-    if (typeof (array) === 'undefined') {
-      array = new Array(0)
-      this.mp.set(targetID, array)
+    if (this.mp.has(targetID)) {
+      this.mp.get(targetID).push(message)
+    } else {
+      this.mp.set(targetID, [message])
     }
-    array.push(message)
   },
   getMessage: function (targetID) {
     console.log(targetID)

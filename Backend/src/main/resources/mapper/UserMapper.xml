@@ -3,11 +3,46 @@
 <mapper namespace="cn.skstudio.dao.UserMapper">
 
     <update id="initialize">
-        CREATE TABLE IF NOT EXISTS user(user_id BIGINT NOT NULL PRIMARY KEY,username VARCHAR(20)NOT NULL,password CHAR(32)NOT NULL,nickname VARCHAR(30)NOT NULL,email VARCHAR(254)NOT NULL,sex NCHAR(2),avatar VARCHAR(256),phone CHAR(11),last_session_id VARCHAR(64),ip VARCHAR(35),signature VARCHAR(32),private_sex boolean default false,private_email boolean default true,private_phone boolean default true,admin boolean default false);
+        CREATE TABLE IF NOT EXISTS user
+        (
+            user_id         BIGINT       NOT NULL PRIMARY KEY,
+            username        VARCHAR(20)  NOT NULL,
+            password        CHAR(32)     NOT NULL,
+            nickname        VARCHAR(30)  NOT NULL,
+            email           VARCHAR(254) NOT NULL,
+            sex             NCHAR(2),
+            avatar          VARCHAR(256),
+            phone           CHAR(11),
+            last_session_id VARCHAR(64),
+            ip              VARCHAR(35),
+            signature       VARCHAR(32),
+            private_sex     boolean default false,
+            private_email   boolean default true,
+            private_phone   boolean default true,
+            admin           boolean default false
+        );
     </update>
 
     <insert id="initializeAdmin" parameterType="cn.skstudio.pojo.User">
-        INSERT INTO user(user_id,username,password,nickname,email,sex,avatar,phone,signature,last_session_id,ip,private_sex,private_phone,private_email,admin) SELECT 1,#{username},#{password},#{nickname},#{email},#{sex},#{avatar},#{phone},#{signature},#{lastSessionID},#{IP},#{privateSex},#{privatePhone},#{privateEmail},#{admin} FROM DUAL WHERE NOT EXISTS(SELECT user_id FROM user WHERE user_id = 1);
+        INSERT INTO user(user_id, username, password, nickname, email, sex, avatar, phone, signature, last_session_id,
+                         ip, private_sex, private_phone, private_email, admin)
+        SELECT 1,
+               #{username},
+               #{password},
+               #{nickname},
+               #{email},
+               #{sex},
+               #{avatar},
+               #{phone},
+               #{signature},
+               #{lastSessionID},
+               #{IP},
+               #{privateSex},
+               #{privatePhone},
+               #{privateEmail},
+               #{admin}
+        FROM DUAL
+        WHERE NOT EXISTS(SELECT user_id FROM user WHERE user_id = 1);
     </insert>
 
     <select id="getAll" resultType="cn.skstudio.pojo.User">
@@ -53,8 +88,10 @@
     </select>
 
     <insert id="insertUser" parameterType="cn.skstudio.pojo.User">
-        INSERT INTO user(user_id, username, password, nickname, email, sex, avatar, phone,signature,last_session_id,ip,private_sex,private_phone,private_email,admin)
-        VALUES (#{userID},#{username},#{password},#{nickname},#{email},#{sex},#{avatar},#{phone},#{signature},#{lastSessionID},#{IP},#{privateSex},#{privatePhone},#{privateEmail},#{admin});
+        INSERT INTO user(user_id, username, password, nickname, email, sex, avatar, phone, signature, last_session_id,
+                         ip, private_sex, private_phone, private_email, admin)
+        VALUES (#{userID}, #{username}, #{password}, #{nickname}, #{email}, #{sex}, #{avatar}, #{phone}, #{signature},
+                #{lastSessionID}, #{IP}, #{privateSex}, #{privatePhone}, #{privateEmail}, #{admin});
     </insert>
 
     <update id="updateUser" parameterType="cn.skstudio.pojo.User">
@@ -92,13 +129,17 @@
                 admin = #{admin}
             </if>
         </set>
-        WHERE
-        user_id = #{userID}
+        <where>
+            user_id = #{userID}
+        </where>
     </update>
 
     <delete id="deleteUser">
-        DELETE FROM user
-        WHERE user_id = id;
+        DELETE
+        FROM user
+        <where>
+            user_id = id;
+        </where>
     </delete>
 
     <update id="updateLoginInfo" parameterType="cn.skstudio.pojo.User">
@@ -108,7 +149,9 @@
             ip = #{IP},
             last_session_id = #{lastSessionID},
         </set>
-        WHERE user_id = #{userID}
+        <where>
+            user_id = #{userID}
+        </where>
     </update>
 
     <update id="updatePassword" parameterType="cn.skstudio.pojo.User">
@@ -117,7 +160,9 @@
         <set>
             password = #{password},
         </set>
-        WHERE user_id = #{userID}
+        <where>
+            user_id = #{userID}
+        </where>
     </update>
 
 </mapper>

@@ -5,11 +5,11 @@ var api = (() => {
   return {
     pk: publicUserAPI + 'pk',
     login: privateUserAPI + 'login',
-    loginStatus: privateUserAPI + 'relogin',
+    loginStatus: privateUserAPI + 'status',
     logout: privateUserAPI + 'logout',
     getCaptcha: publicUserAPI + 'captcha',
     getTestCaptcha: publicUserAPI + 'test/captcha',
-    refreshCaptcha: publicUserAPI + 'newcaptcha',
+    refreshCaptcha: publicUserAPI + 'captcha/fresh',
     reg: registerAPI,
     activate: registerAPI + 'activate'
   }

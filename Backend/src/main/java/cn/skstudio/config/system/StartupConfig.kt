@@ -8,42 +8,15 @@ package cn.skstudio.config.system
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import kotlin.properties.Delegates
 
 @Component
-class StartupConfig {
+class StartupConfig(
+        @Value("\${allowedorigins:}")
+        val allowedOrigins: Array<String>,
 
-    @Value("\${privatekey:#{null}}")
-    fun setPrivateKey(privateKey: String) {
-        Companion.privateKey = privateKey
-    }
+        @Value("\${allowedheaders:}")
+        val allowedHeaders: Array<String>,
 
-    @Value("\${publickey:#{null}}")
-    fun setPublicKey(publicKey: String) {
-        Companion.publicKey = publicKey
-    }
-
-    @Value("\${allowedorigins:}")
-    fun setAllowedOrigins(allowedOrigins: Array<String>) {
-        Companion.allowedOrigins = allowedOrigins
-    }
-
-    @Value("\${allowedheaders:}")
-    fun setAllowedHeaders(allowedHeaders: Array<String>) {
-        Companion.allowedHeaders = allowedHeaders
-    }
-
-    @Value("\${redis.enable:#{false}}")
-    fun setRedisEnabled(enabled: Boolean) {
-        redisEnabled = enabled
-    }
-
-    companion object {
-        lateinit var privateKey: String
-        lateinit var publicKey: String
-        lateinit var allowedOrigins: Array<String>
-        lateinit var allowedHeaders: Array<String>
-        var redisEnabled by Delegates.notNull<Boolean>()
-    }
-
-}
+        @Value("\${redis.enable:#{false}}")
+        val redisEnabled: Boolean
+)

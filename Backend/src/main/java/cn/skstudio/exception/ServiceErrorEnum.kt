@@ -1,13 +1,13 @@
 package cn.skstudio.exception
 
-import cn.skstudio.`interface`.ResponseDataInterface
+import cn.skstudio.intf.ResponseDataInterface
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-enum class ServiceErrorEnum(override val code: Int, override val msg: String, override var data: Any?=null) : ResponseDataInterface {
+enum class ServiceErrorEnum(override val code: Int, override val msg: String, override var data: Any? = null) : ResponseDataInterface {
 
     //无异常
     NO_ERROR(0, "OK"),
@@ -54,17 +54,20 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
 
     //性别
     UNKNOWN_SEX(64000, "未知性别"),
+
+    //组
     GROUP_NOT_EXISTS(65000, "组不存在"),
     GROUP_NAME_TOO_LONG(65001, "组名太长"),
     GROUP_NOT_ALLOW(65002, "组操作不被允许"),
+    DEFAULT_DELETE_NOT_ALLOW(65003, "默认组不能被删除"),
 
     //签名异常
-    SIGNATURE_TOO_LONG(65001, "签名太长"),
+    SIGNATURE_TOO_LONG(65101, "签名太长"),
 
-    /* 激活异常 */
-    ACTIVATE_TOKEN_EXPIRE(65001, "验证已过期"),
-    ACTIVATE_TOKEN_INVALID(65002, "验证无效"),
-    ACTIVATE_UNKNOWN_EXCEPTION(65003, "系统内部错误"),
+    //激活异常
+    ACTIVATE_TOKEN_EXPIRE(65201, "验证已过期"),
+    ACTIVATE_TOKEN_INVALID(65202, "验证无效"),
+    ACTIVATE_UNKNOWN_EXCEPTION(65203, "系统内部错误"),
 
     //登录异常
     USERNAME_NOT_EXISTS(30001, "用户名不存在"),
@@ -108,17 +111,19 @@ enum class ServiceErrorEnum(override val code: Int, override val msg: String, ov
         return this
     }
 
-    @JsonIgnore
-    val ok = code == 0
+    val ok
+        @JsonIgnore
+        get() = code == 0
 
-    @JsonIgnore
-    val bad = code != 0
+    val bad
+        @JsonIgnore
+        get() = code != 0
 
-    fun throwout(): Nothing = throwout(this)
+    fun throwout(cause: Throwable? = null): Nothing = throwout(this, cause)
 
     companion object {
-        fun throwout(error: ServiceErrorEnum):Nothing{
-            throw SKException(error)
+        fun throwout(error: ServiceErrorEnum, cause: Throwable? = null): Nothing {
+            throw SKException(error, cause)
         }
 
         fun fromException(e: Exception): ServiceErrorEnum {

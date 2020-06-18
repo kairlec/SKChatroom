@@ -1,27 +1,33 @@
-package cn.skstudio.local.utils
+package cn.skstudio.service.impl
 
-import cn.skstudio.config.static.StaticConfig
-import cn.skstudio.controller.public.activated.ActivatedController.Companion.logger
+import cn.skstudio.config.system.StaticConfig
+import cn.skstudio.controller.ActivatedController.Companion.logger
 import cn.skstudio.exception.ServiceErrorEnum
 import cn.skstudio.pojo.Captcha
 import cn.skstudio.pojo.User
-import cn.skstudio.utils.PasswordCoder.fromRequest
 import cn.skstudio.utils.IP
+import cn.skstudio.utils.PasswordCoder.fromRequest
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpSession
 
-object UserChecker {
-    fun check(request: HttpServletRequest): User {
+@Component
+class UserCheckerService {
+    @Autowired
+    private lateinit var userService: UserServiceImpl
+
+    fun checkLogin(request: HttpServletRequest, session: HttpSession): User {
         val username = request.getParameter("username")
         var password = request.getParameter("password")
         val ip = request.IP
-
-        val session = request.getSession(true)
-        if (session.getAttribute("user") != null) {
-            ServiceErrorEnum.HAD_LOGGED_IN.data((session.getAttribute("user") as User).userID).throwout()
+        val existUser = session.getAttribute("user")
+        if (existUser as? User != null) {
+            ServiceErrorEnum.HAD_LOGGED_IN.data(existUser.userID).throwout()
         }
         username ?: ServiceErrorEnum.NULL_USERNAME.throwout()//空的用户名
         password ?: ServiceErrorEnum.NULL_PASSWORD.throwout()//空的密码
-        val user: User = LocalConfig.userService.getUserByUsername(username)
+        val user: User = userService.getUserByUsername(username)
                 ?: ServiceErrorEnum.USERNAME_NOT_EXISTS.data(username).throwout() //错误的用户名
         val captcha = session.getAttribute("captcha") as Captcha?
         if (captcha != null) {

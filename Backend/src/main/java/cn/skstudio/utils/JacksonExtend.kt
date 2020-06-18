@@ -1,7 +1,11 @@
 package cn.skstudio.utils
 
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 
 /**
  *@program: Backend
@@ -10,76 +14,58 @@ import com.fasterxml.jackson.databind.node.ObjectNode
  *@create: 2020-03-14 19:32
  */
 
+val jacksonObjectMapper: ObjectMapper
+    get() = jacksonObjectMapper()
 
 
-fun JsonNode?.asLongOrNull(): Long? {
-    if (this == null || !this.isLong) {
-        return null
-    }
-    return this.asLong()
+fun String.Companion.toJSON(`object`: Any, objectMapper: ObjectMapper = jacksonObjectMapper): String {
+    return objectMapper.writeValueAsString(`object`)
 }
 
-fun JsonNode?.asDoubleOrNull(): Double? {
-    if (this == null || !this.isDouble) {
-        return null
+inline fun <reified T> String.json2Object(objectMapper: ObjectMapper = jacksonObjectMapper): T? {
+    return try {
+        objectMapper.readValue(this)
+    } catch (e: JsonParseException) {
+        null
     }
-    return this.asDouble()
 }
 
-fun JsonNode?.asTextOrNull(): String? {
-    if (this == null || !this.isTextual) {
-        return null
+fun String.toJsonNode(objectMapper: ObjectMapper = jacksonObjectMapper): JsonNode? {
+    return try {
+        objectMapper.readTree(this)
+    } catch (e: JsonParseException) {
+        null
     }
-    return this.asText()
 }
 
-fun JsonNode?.asIntOrNull(): Int? {
-    if (this == null || !this.isInt) {
-        return null
+fun String.toObjectNode(objectMapper: ObjectMapper = jacksonObjectMapper): ObjectNode? {
+    return try {
+        objectMapper.readTree(this) as ObjectNode
+    } catch (e: JsonParseException) {
+        null
     }
-    return this.asInt()
 }
+
+
+fun JsonNode?.asLongOrNull() = this?.asText()?.toLongOrNull()
+
+
+fun JsonNode?.asDoubleOrNull() = this?.asText()?.toDoubleOrNull()
+
+fun JsonNode?.asTextOrNull() = this?.asText()
+
+
+fun JsonNode?.asIntOrNull() = this?.asText()?.toIntOrNull()
+
 
 fun JsonNode?.asBooleanOrNull(): Boolean? {
-    if (this == null || !this.isBoolean) {
-        return null
+    return this?.asText()?.let {
+        return when {
+            it.equals("true", true) -> true
+            it.equals("false", true) -> false
+            else -> null
+        }
     }
-    return this.asBoolean()
-}
-
-fun ObjectNode?.asLongOrNull(): Long? {
-    if (this == null || !this.isLong) {
-        return null
-    }
-    return this.asLong()
-}
-
-fun ObjectNode?.asDoubleOrNull(): Double? {
-    if (this == null || !this.isDouble) {
-        return null
-    }
-    return this.asDouble()
-}
-
-fun ObjectNode?.asTextOrNull(): String? {
-    if (this == null || !this.isTextual) {
-        return null
-    }
-    return this.asText()
-}
-
-fun ObjectNode?.asIntOrNull(): Int? {
-    if (this == null || !this.isInt) {
-        return null
-    }
-    return this.asInt()
-}
-
-fun ObjectNode?.asBooleanOrNull(): Boolean? {
-    if (this == null || !this.isBoolean) {
-        return null
-    }
-    return this.asBoolean()
 }
 
 operator fun ObjectNode.set(fieldName: String, data: Any?) {

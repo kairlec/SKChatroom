@@ -39,7 +39,7 @@ function longSock (url, fn, fnResponse, intro = '') {
         if (count < 3) {
           if (ws.readyState === 1) {
             sendMessage(null, 'HeartBeat')
-            // console.info(`${intro}HeartBeat第${count + 1}次`)
+            console.info(`${intro}HeartBeat第${count + 1}次`)
           }
           count++
         } else {
@@ -123,7 +123,6 @@ const handler = (data, ws) => {
   console.log(data)
   var dataObject = JSON.parse(data)
   actionMessagePool.addMessage(dataObject.fromID, dataObject)
-  ChatBoxMap.sendMessage(dataObject.fromID, dataObject)
   getMainBoxWindow().receive(dataObject)
 }
 

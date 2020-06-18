@@ -4,7 +4,6 @@ import cn.skstudio.pojo.SKImage
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -15,7 +14,7 @@ object ResourcesUtils {
 
     private val resourceRootPath = Path.of("Resources")
 
-    fun getResourcePath(resourceType: ResourceType, resourceName: String)=Path.of(resourceRootPath.toAbsolutePath().toString(), "${resourceType.name}${File.separator}$resourceName")
+    fun getResourcePath(resourceType: ResourceType, resourceName: String) = Path.of(resourceRootPath.toAbsolutePath().toString(), "${resourceType.name}${File.separator}$resourceName")
 
 
     fun saveResource(resourceType: ResourceType, resourceName: String, multipartFile: MultipartFile, overWrite: Boolean = false) {
@@ -29,10 +28,10 @@ object ResourcesUtils {
         multipartFile.transferTo(resourcePath.toFile())
     }
 
-    fun resourceExists(resourceType: ResourceType, resourceName: String)=Files.exists(getResourcePath(resourceType, resourceName))
+    fun resourceExists(resourceType: ResourceType, resourceName: String) = Files.exists(getResourcePath(resourceType, resourceName))
 
 
-    fun deleteResource(resourceType: ResourceType, resourceName: String)=Files.deleteIfExists(getResourcePath(resourceType, resourceName))
+    fun deleteResource(resourceType: ResourceType, resourceName: String) = Files.deleteIfExists(getResourcePath(resourceType, resourceName))
 
 
     fun getImageResource(resourceType: ResourceType, resourceName: String): SKImage {
